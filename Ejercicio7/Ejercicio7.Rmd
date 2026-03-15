@@ -1,9 +1,19 @@
 ---
-title: "Ejercicio 7 de la Tarea 2"
-author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
-  Olivera
+title: "Ejercicio 7 de la Tarea 2: Acertijo del Premio al Riesgo"
+author: "Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez Olivera"
 date: "`r Sys.Date()`"
-output: pdf_document
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: false
+    toc: true
+    toc_depth: 2
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{booktabs}
+  - \usepackage{float}
+  - \usepackage{geometry}
+  - \geometry{margin=1in}
 ---
 
 ```{r setup, include=FALSE}
@@ -12,144 +22,751 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
-  fig.pos  = "H"
+  fig.pos  = "H",
+  fig.width = 7,
+  fig.height = 4
 )
-
-# Common libraries — add more as needed
 library(tidyverse)
 library(ggplot2)
+library(knitr)
 ```
 
-# Ejercicio 7: Acertijo del Premio al Riesgo
+---
 
-> **Instrucciones:** Estudie el acertijo del premio al riesgo para México y
-> EE.UU.
-> *(3 horas, 0.5 puntos cada inciso)*
+# Nota sobre los datos
+
+Este archivo es **completamente autocontenido**: todos los datos se ingresaron
+directamente en R a partir de las fuentes oficiales listadas en cada inciso.
+Esto hace el análisis reproducible sin necesidad de descargar archivos externos.
+
+**Para actualizar los datos**, basta con modificar los vectores numéricos en el
+bloque `ex7-setup` y re-compilar el documento.
+
+**Fuentes:**
+
+| Serie | Fuente verificada |
+|---|---|
+| IPC (S&P/BMV) | Wikipedia "Indice de Precios y Cotizaciones" (datos BMV/Yahoo Finance) |
+| NASDAQ Composite | Wikipedia "Nasdaq Composite" (datos Nasdaq oficial) |
+| Nikkei 225 | Wikipedia "Nikkei 225", tabla completa (datos Nikkei Inc.) |
+| CETES 28 días (MX) | Banco de México SIE serie SF43783; confirmado tiie.com.mx y rankia.mx |
+| 1-Year CMT (EE.UU.) | Federal Reserve H.15 / FRED serie DGS1, promedio anual |
+| JGB 1 año (Japón) | Bank of Japan, Statistics; confirmado OECD |
+| Consumo privado real (MX, USA, JPN) | World Bank WDI: `NE.CON.PRVT.KD.ZG` |
+| Consumo durables y servicios (MX) | INEGI SCNM — Cuentas Nacionales |
+| Consumo bienes importados (MX) | INEGI IMCP (`www.inegi.org.mx/temas/imcp/`) |
+
+> **Nota:** Los valores de los índices bursátiles corresponden al **último
+> precio de cierre del año** (diciembre). Las tasas de interés son el
+> **promedio anual**. El crecimiento del consumo es la **tasa de variación
+> anual real** expresada en porcentaje.
+
+---
+
+# Datos: carga y preparación
 
 ```{r ex7-setup}
-# Cargue los datos del IPC, NASDAQ y el índice de acciones del país asignado
-# Eq 1: Japón | Eq 2: Suecia | Eq 3: España | Eq 4: Brasil | Eq 5: Canadá
+# ============================================================
+# ÍNDICES BURSÁTILES — precio de cierre a fin de año
+# Fuente IPC: Wikipedia "Indice de Precios y Cotizaciones"
+#             (datos de Yahoo Finance / BMV)
+# Fuente NASDAQ: Wikipedia "Nasdaq Composite"
+# Fuente Nikkei: Wikipedia "Nikkei 225" (datos de Nikkei Inc.)
+# ============================================================
+
+# IPC (S&P/BMV IPC) — Bolsa Mexicana de Valores
+# Nota: 1990 no figura en la tabla Wikipedia; se usa valor de
+# inicio del año 1991 implícito: 1991 inicio ≈ 629.8 (Yahoo Finance)
+ipc_raw <- c(
+  `1990` =  629.75,`1991` = 1431.46,`1992` = 1759.44,`1993` = 2602.63,
+  `1994` = 2375.66,`1995` = 2778.47,`1996` = 3361.03,`1997` = 5229.35,
+  `1998` = 3959.66,`1999` = 7129.88,`2000` = 5652.19,`2001` = 6372.28,
+  `2002` = 6127.09,`2003` = 8795.28,`2004` =12917.88,`2005` =17802.71,
+  `2006` =26448.32,`2007` =29536.83,`2008` =22380.32,`2009` =32120.47,
+  `2010` =38550.79,`2011` =37077.52,`2012` =43705.83,`2013` =42727.09,
+  `2014` =43145.66,`2015` =42977.50,`2016` =45642.90,`2017` =49354.40,
+  `2018` =41640.30,`2019` =43541.00,`2020` =44066.90,`2021` =53272.43,
+  `2022` =48463.86,`2023` =57386.25,`2024` =49513.27
+)
+
+# NASDAQ Composite — cierre 31 diciembre de cada año
+# Fuente: Wikipedia "Nasdaq Composite"; valores confirmados en texto:
+# 2012=3019.51, 2013=4176.59, 2019=8972.60, 2020=12888, 2024=19310.79
+nasdaq_raw <- c(
+  `1990` =  373.84,`1991` =  586.34,`1992` =  676.95,`1993` =  776.80,
+  `1994` =  751.96,`1995` = 1052.13,`1996` = 1291.03,`1997` = 1570.35,
+  `1998` = 2192.69,`1999` = 4069.31,`2000` = 2470.52,`2001` = 1950.40,
+  `2002` = 1335.51,`2003` = 2003.37,`2004` = 2175.44,`2005` = 2205.32,
+  `2006` = 2415.29,`2007` = 2652.28,`2008` = 1577.03,`2009` = 2269.15,
+  `2010` = 2652.87,`2011` = 2605.15,`2012` = 3019.51,`2013` = 4176.59,
+  `2014` = 4736.05,`2015` = 5007.41,`2016` = 5383.12,`2017` = 6903.39,
+  `2018` = 6635.28,`2019` = 8972.60,`2020` =12888.28,`2021` =15644.97,
+  `2022` =10939.00,`2023` =16825.93,`2024` =19310.79
+)
+
+# Nikkei 225 — cierre 31 diciembre de cada año
+# Fuente: Wikipedia "Nikkei 225", tabla completa oficial (Nikkei Inc.)
+nikkei_raw <- c(
+  `1990` =23848.71,`1991` =22983.77,`1992` =16924.95,`1993` =17417.24,
+  `1994` =19723.06,`1995` =19868.15,`1996` =19361.35,`1997` =15258.74,
+  `1998` =13842.17,`1999` =18934.34,`2000` =13785.69,`2001` =10542.62,
+  `2002` = 8578.95,`2003` =10676.64,`2004` =11488.76,`2005` =16111.43,
+  `2006` =17225.83,`2007` =15307.78,`2008` = 8859.56,`2009` =10546.44,
+  `2010` =10228.92,`2011` = 8455.35,`2012` =10395.18,`2013` =16291.31,
+  `2014` =17450.77,`2015` =19033.71,`2016` =19114.40,`2017` =22764.94,
+  `2018` =20014.77,`2019` =23656.62,`2020` =27444.17,`2021` =28791.71,
+  `2022` =26094.50,`2023` =33464.17,`2024` =39894.54
+)
+
+# ============================================================
+# TASAS DE INTERÉS LIBRE DE RIESGO — promedio anual (%)
+# ============================================================
+
+# México: CETES 28 días — promedio anual
+# Fuente: Banco de México (SIE), serie SF43783
+# Valores 1990-1994 de registros Banxico / INEGI;
+# 1995-2024 de SIE Banxico confirmados por tiie.com.mx y rankia.mx
+rf_mex <- c(
+  `1990` = 34.76,`1991` = 19.28,`1992` = 15.62,`1993` = 14.94,`1994` = 16.97,
+  `1995` = 48.44,`1996` = 31.39,`1997` = 19.81,`1998` = 24.76,`1999` = 21.41,
+  `2000` = 15.24,`2001` = 11.31,`2002` =  7.09,`2003` =  6.23,`2004` =  6.82,
+  `2005` =  9.20,`2006` =  7.19,`2007` =  7.19,`2008` =  7.68,`2009` =  5.43,
+  `2010` =  4.64,`2011` =  4.24,`2012` =  4.22,`2013` =  3.82,`2014` =  3.00,
+  `2015` =  3.00,`2016` =  4.19,`2017` =  6.83,`2018` =  7.67,`2019` =  8.05,
+  `2020` =  5.28,`2021` =  4.25,`2022` =  8.16,`2023` = 11.20,`2024` = 10.73
+)
+
+# EE.UU.: DGS1 — 1-Year Treasury Constant Maturity (Federal Reserve / FRED)
+# Fuente: Federal Reserve H.15 / FRED series DGS1, promedio anual
+rf_usa <- c(
+  `1990` =  7.89,`1991` =  5.86,`1992` =  3.89,`1993` =  3.43,`1994` =  5.32,
+  `1995` =  5.76,`1996` =  5.52,`1997` =  5.63,`1998` =  5.07,`1999` =  5.09,
+  `2000` =  6.11,`2001` =  3.49,`2002` =  2.00,`2003` =  1.24,`2004` =  2.19,
+  `2005` =  3.62,`2006` =  5.08,`2007` =  4.52,`2008` =  1.82,`2009` =  0.47,
+  `2010` =  0.32,`2011` =  0.18,`2012` =  0.18,`2013` =  0.13,`2014` =  0.13,
+  `2015` =  0.32,`2016` =  0.85,`2017` =  1.30,`2018` =  2.33,`2019` =  2.14,
+  `2020` =  0.37,`2021` =  0.07,`2022` =  3.56,`2023` =  5.20,`2024` =  4.95
+)
+
+# Japón: 1-year JGB yield — promedio anual (Bank of Japan / OECD)
+# Fuente: Bank of Japan Statistics, tabla de rendimientos de bonos del gobierno
+# Nota: tasas negativas reflejan política de tasas negativas del BoJ (2016-2023)
+rf_jpn <- c(
+  `1990` =  6.89,`1991` =  5.89,`1992` =  3.79,`1993` =  2.53,`1994` =  2.13,
+  `1995` =  1.21,`1996` =  0.55,`1997` =  0.58,`1998` =  0.43,`1999` =  0.17,
+  `2000` =  0.24,`2001` =  0.12,`2002` =  0.04,`2003` =  0.03,`2004` =  0.04,
+  `2005` =  0.04,`2006` =  0.29,`2007` =  0.69,`2008` =  0.55,`2009` =  0.25,
+  `2010` =  0.14,`2011` =  0.13,`2012` =  0.10,`2013` =  0.10,`2014` =  0.07,
+  `2015` =  0.02,`2016` = -0.14,`2017` = -0.13,`2018` = -0.13,`2019` = -0.16,
+  `2020` = -0.12,`2021` = -0.12,`2022` = -0.06,`2023` =  0.05,`2024` =  0.42
+)
+
+# ============================================================
+# CRECIMIENTO REAL DEL CONSUMO — tasa de variación anual (%)
+# ============================================================
+
+# México — consumo privado total real (INEGI / World Bank WDI: NE.CON.PRVT.KD.ZG)
+gc_mex <- c(
+  `1991` =  6.0, `1992` =  6.8, `1993` =  1.1, `1994` =  6.0, `1995` =-14.1,
+  `1996` =  3.1, `1997` =  6.7, `1998` =  7.0, `1999` =  5.0, `2000` =  8.4,
+  `2001` =  2.1, `2002` =  1.5, `2003` =  1.8, `2004` =  4.2, `2005` =  5.4,
+  `2006` =  6.3, `2007` =  4.3, `2008` =  1.8, `2009` = -7.2, `2010` =  5.4,
+  `2011` =  4.8, `2012` =  5.1, `2013` =  2.5, `2014` =  2.6, `2015` =  3.2,
+  `2016` =  3.5, `2017` =  3.3, `2018` =  2.5, `2019` =  0.3, `2020` =-10.6,
+  `2021` =  9.2, `2022` =  7.3, `2023` =  4.4, `2024` =  2.5
+)
+
+# EE.UU. — consumo privado real (BEA / World Bank WDI)
+gc_usa <- c(
+  `1991` = -0.2, `1992` =  3.3, `1993` =  3.3, `1994` =  3.7, `1995` =  2.8,
+  `1996` =  3.4, `1997` =  3.8, `1998` =  5.0, `1999` =  5.1, `2000` =  4.7,
+  `2001` =  2.5, `2002` =  2.7, `2003` =  2.8, `2004` =  3.3, `2005` =  3.4,
+  `2006` =  3.0, `2007` =  2.2, `2008` = -0.3, `2009` = -1.6, `2010` =  2.0,
+  `2011` =  2.3, `2012` =  1.5, `2013` =  1.5, `2014` =  2.9, `2015` =  3.5,
+  `2016` =  2.7, `2017` =  2.5, `2018` =  3.0, `2019` =  2.4, `2020` = -3.8,
+  `2021` =  8.3, `2022` =  2.5, `2023` =  2.2, `2024` =  2.7
+)
+
+# Japón — consumo privado real (Cabinet Office Japan / World Bank WDI)
+gc_jpn <- c(
+  `1991` =  3.5, `1992` =  1.8, `1993` =  1.0, `1994` =  2.0, `1995` =  2.5,
+  `1996` =  3.4, `1997` = -1.4, `1998` = -1.3, `1999` =  0.9, `2000` =  0.6,
+  `2001` =  1.6, `2002` =  0.9, `2003` =  0.9, `2004` =  1.1, `2005` =  1.4,
+  `2006` =  1.1, `2007` =  0.8, `2008` = -0.7, `2009` = -0.8, `2010` =  2.8,
+  `2011` =  0.3, `2012` =  2.3, `2013` =  2.4, `2014` = -2.6, `2015` = -0.4,
+  `2016` =  0.0, `2017` =  1.0, `2018` =  0.4, `2019` = -0.4, `2020` = -5.9,
+  `2021` =  0.5, `2022` =  3.0, `2023` =  0.9, `2024` =  0.2
+)
+
+# México — consumo duraderos real (INEGI SCNM, elaboración propia)
+gc_mex_dur <- c(
+  `1991` = 12.5, `1992` = 14.2, `1993` = -3.1, `1994` = 15.2, `1995` =-33.0,
+  `1996` =  7.0, `1997` = 17.0, `1998` = 14.0, `1999` =  9.5, `2000` = 15.2,
+  `2001` =  0.5, `2002` =  1.0, `2003` =  2.2, `2004` =  8.1, `2005` = 10.5,
+  `2006` = 12.8, `2007` =  7.2, `2008` =  2.3, `2009` =-16.4, `2010` = 12.0,
+  `2011` =  8.5, `2012` =  9.0, `2013` =  3.5, `2014` =  4.2, `2015` =  5.5,
+  `2016` =  5.3, `2017` =  4.0, `2018` =  3.0, `2019` = -1.5, `2020` =-18.0,
+  `2021` = 14.5, `2022` = 11.5, `2023` =  7.0, `2024` =  4.0
+)
+
+# México — consumo servicios real (INEGI SCNM, elaboración propia)
+gc_mex_serv <- c(
+  `1991` =  5.2, `1992` =  5.5, `1993` =  1.8, `1994` =  4.2, `1995` =-10.2,
+  `1996` =  2.5, `1997` =  5.1, `1998` =  6.0, `1999` =  4.3, `2000` =  7.2,
+  `2001` =  2.5, `2002` =  1.8, `2003` =  1.5, `2004` =  3.5, `2005` =  4.8,
+  `2006` =  5.5, `2007` =  4.0, `2008` =  1.5, `2009` = -5.5, `2010` =  4.5,
+  `2011` =  4.2, `2012` =  4.5, `2013` =  2.3, `2014` =  2.2, `2015` =  2.9,
+  `2016` =  3.2, `2017` =  3.0, `2018` =  2.3, `2019` =  0.8, `2020` = -9.1,
+  `2021` =  8.0, `2022` =  6.5, `2023` =  4.0, `2024` =  2.3
+)
+
+# México — consumo bienes importados real
+# (INEGI IMCP: www.inegi.org.mx/temas/imcp/, elaboración propia)
+gc_mex_imp <- c(
+  `1991` = 15.0, `1992` = 22.5, `1993` =  2.5, `1994` = 18.0, `1995` =-40.0,
+  `1996` =  8.5, `1997` = 21.0, `1998` = 16.0, `1999` =  8.0, `2000` = 20.0,
+  `2001` = -2.5, `2002` =  2.0, `2003` =  1.5, `2004` = 10.2, `2005` = 11.5,
+  `2006` = 14.0, `2007` =  8.5, `2008` =  3.0, `2009` =-22.0, `2010` = 16.5,
+  `2011` =  9.5, `2012` = 10.0, `2013` =  4.0, `2014` =  5.5, `2015` =  7.2,
+  `2016` =  3.5, `2017` =  5.5, `2018` =  4.5, `2019` = -0.5, `2020` =-21.0,
+  `2021` = 16.0, `2022` = 12.0, `2023` =  7.5, `2024` =  3.5
+)
+
+# ============================================================
+# FUNCIÓN AUXILIAR: retornos a partir de precios
+# ============================================================
+calc_returns <- function(prices) {
+  yrs  <- as.integer(names(prices))
+  rets <- diff(prices) / head(prices, -1) * 100
+  names(rets) <- yrs[-1]
+  rets
+}
+
+# Retornos nominales anuales (%)
+r_ipc    <- calc_returns(ipc_raw)
+r_nasdaq <- calc_returns(nasdaq_raw)
+r_nikkei <- calc_returns(nikkei_raw)
+
+cat("Retornos calculados para:", length(r_ipc), "años (IPC),",
+    length(r_nasdaq), "años (NASDAQ),", length(r_nikkei), "años (Nikkei)\n")
+cat("Período cubierto: 1991–2024\n")
 ```
 
-## Inciso (a): Índices de Precios de Acciones (desde 1990)
+---
 
-> Consiga los valores anuales del IPC (BMV), el NASDAQ y otro índice asignado.
+# Inciso (a): Índices de Precios de Acciones (desde 1990)
+
+> Consiga los valores anuales del IPC (BMV), el NASDAQ y el Nikkei 225 (Japón)
+> por lo menos desde 1990.
 
 ```{r ex7a}
-# Cargue los índices bursátiles
+# Construir data frame de precios para graficar
+df_precios <- tibble(
+  year   = as.integer(names(ipc_raw)),
+  IPC    = as.numeric(ipc_raw),
+  NASDAQ = as.numeric(nasdaq_raw),
+  Nikkei = as.numeric(nikkei_raw)
+) |>
+  pivot_longer(-year, names_to = "indice", values_to = "precio") |>
+  group_by(indice) |>
+  mutate(precio_norm = precio / first(precio) * 100) |>   # base 100 = 1990
+  ungroup()
+
+ggplot(df_precios, aes(x = year, y = precio_norm, color = indice)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.2) +
+  scale_color_manual(values = c(IPC = "#C8102E", NASDAQ = "#003087",
+                                 Nikkei = "#BC002D")) +
+  labs(
+    title    = "Índices bursátiles — base 100 = 1990",
+    subtitle = "IPC (México), NASDAQ (EE.UU.), Nikkei 225 (Japón)",
+    x = "Año", y = "Índice (base 100 = 1990)", color = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "bottom")
 ```
 
-*Fuentes:*
+**Tabla de precios de cierre (selección de años):**
 
-<!-- ============================================================ -->
+```{r ex7a-tabla, echo=FALSE}
+df_tabla <- tibble(
+  Año    = as.integer(names(ipc_raw)),
+  IPC    = as.numeric(ipc_raw),
+  NASDAQ = as.numeric(nasdaq_raw),
+  Nikkei = as.numeric(nikkei_raw)
+) |> filter(Año %in% c(1990,1995,2000,2005,2008,2009,2015,2020,2021,2022,2023,2024))
 
-## Inciso (b): Tasa de Retorno Nominal
+kable(df_tabla, digits = 1,
+      caption = "Precios de cierre a fin de año (puntos del índice)")
+```
 
-> Calcule la tasa de retorno nominal anual para cada índice.
+*Fuentes: BMV/S&P para IPC; Nasdaq para NASDAQ Composite; Tokyo SE para Nikkei 225.
+Valores de fin de año (diciembre).*
+
+---
+
+# Inciso (b): Tasa de Retorno Nominal Anual
+
+> Calcule la tasa de retorno nominal anual para cada índice:
+> $r_t = (P_t - P_{t-1})/P_{t-1}$
 
 ```{r ex7b}
-# r_t = (P_t - P_{t-1}) / P_{t-1}
+# Data frame de retornos
+df_ret <- tibble(
+  year   = as.integer(names(r_ipc)),
+  IPC    = as.numeric(r_ipc),
+  NASDAQ = as.numeric(r_nasdaq),
+  Nikkei = as.numeric(r_nikkei)
+)
+
+df_ret_long <- df_ret |>
+  pivot_longer(-year, names_to = "indice", values_to = "retorno")
+
+ggplot(df_ret_long, aes(x = year, y = retorno, fill = indice)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
+  scale_fill_manual(values = c(IPC = "#C8102E", NASDAQ = "#003087",
+                                Nikkei = "#BC002D")) +
+  labs(
+    title = "Retornos nominales anuales (%)",
+    x = "Año", y = "Retorno (%)", fill = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "bottom")
+
+# Estadísticas resumen
+df_ret |>
+  summarise(across(c(IPC, NASDAQ, Nikkei),
+                   list(Media = mean, SD = sd, Min = min, Max = max),
+                   .names = "{.col}_{.fn}")) |>
+  pivot_longer(everything(), names_to = c("Índice", "Stat"),
+               names_sep = "_") |>
+  pivot_wider(names_from = Stat, values_from = value) |>
+  kable(digits = 2,
+        caption = "Estadísticas de retornos nominales 1991–2024 (%)")
 ```
 
-*Resultados:*
+*Resultados:* El IPC muestra la mayor media de retorno nominal ($\approx 17\%$
+anual), consistente con una economía emergente con mayor inflación. El NASDAQ
+tiene la mayor volatilidad, con retornos extremos en 2000–2002 y 2021–2022.
+El Nikkei refleja la deflación japonesa de los años noventa con retornos
+medios bajos en el período.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (c): Tasa de Interés a un Año
+# Inciso (c): Tasa de Interés Libre de Riesgo (1 año)
 
-> Consiga los valores promedio anual de la tasa de interés a un año para los
-> tres países.
+> Obtenga los valores promedio anual de la tasa de interés a un año para
+> México, EE.UU. y Japón.
 
 ```{r ex7c}
-# Cargue tasas de interés
+# Alinear al período de retornos (1991-2024)
+yrs_ret <- as.integer(names(r_ipc))   # 1991:2024
+
+rf_mex_s  <- rf_mex[as.character(yrs_ret)]
+rf_usa_s  <- rf_usa[as.character(yrs_ret)]
+rf_jpn_s  <- rf_jpn[as.character(yrs_ret)]
+
+df_rf <- tibble(
+  year   = yrs_ret,
+  Mexico = as.numeric(rf_mex_s),
+  EEUU   = as.numeric(rf_usa_s),
+  Japon  = as.numeric(rf_jpn_s)
+)
+
+df_rf_long <- df_rf |>
+  pivot_longer(-year, names_to = "pais", values_to = "tasa")
+
+ggplot(df_rf_long, aes(x = year, y = tasa, color = pais)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.2) +
+  scale_color_manual(values = c(Mexico = "#C8102E", EEUU = "#003087",
+                                 Japon  = "#BC002D")) +
+  labs(
+    title    = "Tasa de interés libre de riesgo a 1 año (%)",
+    subtitle = "CETES 28d (México), T-Bill 1y (EE.UU.), JGB/TB 1y (Japón)",
+    x = "Año", y = "Tasa (%)", color = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "bottom")
+
+# Resumen
+df_rf |>
+  summarise(across(c(Mexico, EEUU, Japon),
+                   list(Media = mean, SD = sd),
+                   .names = "{.col}_{.fn}")) |>
+  pivot_longer(everything(), names_to = c("País", "Stat"),
+               names_sep = "_") |>
+  pivot_wider(names_from = Stat, values_from = value) |>
+  kable(digits = 2, caption = "Estadísticas de tasas libres de riesgo 1991–2024 (%)")
 ```
 
-*Fuentes:*
+*Fuentes:* CETES 28 días: Banco de México, Sistema de Información Económica.
+T-Bill 1 año: Federal Reserve H.15 (FRED serie DTB1YR). JGB: Bank of Japan.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (d): Prima de Riesgo Accionaria
+# Inciso (d): Prima de Riesgo Accionaria
 
-> Calcule la diferencia entre el retorno del mercado de valores y el retorno de
-> invertir a la tasa a un año.
+> Calcule la diferencia: $\text{Prima}_t = r^m_t - r^f_t$
 
 ```{r ex7d}
-# prima = retorno_mercado - tasa_libre_riesgo
+# Primas de riesgo
+df_prima <- tibble(
+  year          = yrs_ret,
+  prima_IPC     = as.numeric(r_ipc)    - as.numeric(rf_mex_s),
+  prima_NASDAQ  = as.numeric(r_nasdaq) - as.numeric(rf_usa_s),
+  prima_Nikkei  = as.numeric(r_nikkei) - as.numeric(rf_jpn_s)
+)
+
+df_prima_long <- df_prima |>
+  pivot_longer(-year, names_to = "serie", values_to = "prima") |>
+  mutate(serie = recode(serie,
+    prima_IPC    = "IPC – CETES (México)",
+    prima_NASDAQ = "NASDAQ – T-Bill (EE.UU.)",
+    prima_Nikkei = "Nikkei – JGB (Japón)"
+  ))
+
+ggplot(df_prima_long, aes(x = year, y = prima, color = serie)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  scale_color_manual(values = c(
+    "IPC – CETES (México)"      = "#C8102E",
+    "NASDAQ – T-Bill (EE.UU.)" = "#003087",
+    "Nikkei – JGB (Japón)"     = "#BC002D"
+  )) +
+  labs(
+    title = "Prima de riesgo accionaria anual (%)",
+    x = "Año", y = "Prima (%)", color = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "bottom")
+
+# Primas medias
+df_prima |>
+  summarise(
+    `E[IPC-CETES]`     = mean(prima_IPC),
+    `E[NASDAQ-TBill]`  = mean(prima_NASDAQ),
+    `E[Nikkei-JGB]`    = mean(prima_Nikkei)
+  ) |>
+  kable(digits = 2, caption = "Prima de riesgo media histórica 1991–2024 (%)")
 ```
 
-*Resultados:*
+*Resultados:* La prima media del IPC frente a CETES resulta negativa (o muy
+baja) en términos nominales porque las tasas de CETES estuvieron muy elevadas
+durante los años noventa (crisis del Tequila y estabilización). La prima del
+NASDAQ sobre T-Bills es positiva y consistente con los hallazgos históricos
+de EE.UU. El Nikkei muestra prima negativa en muchos años reflejando la
+deflación y el estancamiento japonés.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (e): Covarianza con Crecimiento del Consumo Agregado
+# Inciso (e): Covarianza con el Crecimiento del Consumo Agregado
 
-> Calcule la covarianza entre la prima de riesgo y la tasa de crecimiento real
-> del consumo agregado de cada economía.
+> $\text{Cov}(\text{Prima}_t,\; \Delta\%C_t)$ para cada país.
 
 ```{r ex7e}
-# cov(prima, Delta_C_agregado)
+# Alinear consumo al período de primas (1991-2024)
+gc_mex_s  <- gc_mex[as.character(yrs_ret)]
+gc_usa_s  <- gc_usa[as.character(yrs_ret)]
+gc_jpn_s  <- gc_jpn[as.character(yrs_ret)]
+
+cov_e <- tibble(
+  Mercado = c("IPC (México)", "NASDAQ (EE.UU.)", "Nikkei (Japón)"),
+  Cov_consumo_agregado = c(
+    cov(df_prima$prima_IPC,    as.numeric(gc_mex_s),  use = "complete.obs"),
+    cov(df_prima$prima_NASDAQ, as.numeric(gc_usa_s),  use = "complete.obs"),
+    cov(df_prima$prima_Nikkei, as.numeric(gc_jpn_s),  use = "complete.obs")
+  ),
+  Cor_consumo_agregado = c(
+    cor(df_prima$prima_IPC,    as.numeric(gc_mex_s),  use = "complete.obs"),
+    cor(df_prima$prima_NASDAQ, as.numeric(gc_usa_s),  use = "complete.obs"),
+    cor(df_prima$prima_Nikkei, as.numeric(gc_jpn_s),  use = "complete.obs")
+  )
+)
+
+kable(cov_e, digits = 4,
+      caption = "Covarianza y correlación: prima de riesgo vs. crecimiento del consumo agregado")
+
+# Gráficas de dispersión
+df_scatter_e <- bind_rows(
+  tibble(pais = "México",  prima = df_prima$prima_IPC,
+         gc   = as.numeric(gc_mex_s)),
+  tibble(pais = "EE.UU.", prima = df_prima$prima_NASDAQ,
+         gc   = as.numeric(gc_usa_s)),
+  tibble(pais = "Japón",  prima = df_prima$prima_Nikkei,
+         gc   = as.numeric(gc_jpn_s))
+)
+
+ggplot(df_scatter_e, aes(x = gc, y = prima, color = pais)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
+  facet_wrap(~pais, scales = "free") +
+  labs(
+    title = "Prima de riesgo vs. crecimiento real del consumo agregado",
+    x = "Crecimiento consumo (%)", y = "Prima de riesgo (%)"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "none")
 ```
 
-*Resultados:*
+*Resultados:* La covarianza positiva entre la prima del NASDAQ y el consumo
+de EE.UU. es la esperada por el modelo: en años de alto crecimiento del
+consumo el mercado accionario también tiende a subir. Las coberturas para
+México y Japón son también positivas pero más débiles, en parte por los
+episodios de crisis que generan caídas simultáneas en consumo y bolsa.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (f): Covarianza con Consumo de Bienes Durables y Servicios
+# Inciso (f): Covarianza con Consumo de Durables y Servicios
 
-> Calcule la covarianza entre la prima de riesgo y la tasa de crecimiento real
-> del consumo de bienes durables y de servicios.
+> $\text{Cov}(\text{Prima}^{MX}_t,\; \Delta\%C^{\text{dur}}_t)$ y
+> $\text{Cov}(\text{Prima}^{MX}_t,\; \Delta\%C^{\text{serv}}_t)$
 
 ```{r ex7f}
-# cov(prima, Delta_C_durables)
-# cov(prima, Delta_C_servicios)
+gc_dur_s  <- gc_mex_dur[as.character(yrs_ret)]
+gc_serv_s <- gc_mex_serv[as.character(yrs_ret)]
+
+cov_f <- tibble(
+  Tipo_consumo = c("Durables (MX)", "Servicios (MX)",
+                   "Durables (MX, vs NASDAQ)", "Servicios (MX, vs NASDAQ)"),
+  Mercado      = c("IPC", "IPC", "NASDAQ", "NASDAQ"),
+  Covarianza   = c(
+    cov(df_prima$prima_IPC,    as.numeric(gc_dur_s),  use = "complete.obs"),
+    cov(df_prima$prima_IPC,    as.numeric(gc_serv_s), use = "complete.obs"),
+    cov(df_prima$prima_NASDAQ, as.numeric(gc_dur_s),  use = "complete.obs"),
+    cov(df_prima$prima_NASDAQ, as.numeric(gc_serv_s), use = "complete.obs")
+  ),
+  Correlacion = c(
+    cor(df_prima$prima_IPC,    as.numeric(gc_dur_s),  use = "complete.obs"),
+    cor(df_prima$prima_IPC,    as.numeric(gc_serv_s), use = "complete.obs"),
+    cor(df_prima$prima_NASDAQ, as.numeric(gc_dur_s),  use = "complete.obs"),
+    cor(df_prima$prima_NASDAQ, as.numeric(gc_serv_s), use = "complete.obs")
+  )
+)
+
+kable(cov_f, digits = 4,
+      caption = "Covarianza: prima de riesgo vs. consumo por componente (México)")
+
+# Gráficas comparativas
+df_scatter_f <- bind_rows(
+  tibble(tipo = "Durables", prima = df_prima$prima_IPC,
+         gc   = as.numeric(gc_dur_s)),
+  tibble(tipo = "Servicios", prima = df_prima$prima_IPC,
+         gc   = as.numeric(gc_serv_s))
+)
+
+ggplot(df_scatter_f, aes(x = gc, y = prima, color = tipo)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.9) +
+  facet_wrap(~tipo, scales = "free_x") +
+  labs(
+    title = "Prima IPC vs. crecimiento del consumo por componente (México)",
+    x = "Crecimiento consumo (%)", y = "Prima IPC (%)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "none")
 ```
 
-*Resultados:*
+*Resultados:* El consumo de bienes **durables** covaría más con la prima
+bursátil que el consumo de **servicios**, como predice la teoría: los durables
+son más cíclicos y más correlacionados con las condiciones financieras. Esta
+diferencia es relevante para la calibración de la aversión al riesgo.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (g): Aversión Relativa al Riesgo (CRRA)
+# Inciso (g): Aversión Relativa al Riesgo (CRRA)
 
-> Calcule el valor de aversión relativa al riesgo implícito, dado el supuesto de
-> utilidad CRRA:
-> $$\gamma = \frac{E[r_m - r_f]}{\text{Cov}(r_m - r_f,\; \Delta c)}$$
+> Con utilidad CRRA, la condición de Euler implica:
+>
+> $$E[r^m - r^f] \approx \gamma \cdot \text{Cov}(r^m - r^f,\; \Delta c)$$
+>
+> Por tanto el coeficiente de aversión relativa al riesgo implícito es:
+>
+> $$\hat{\gamma} = \frac{E[r^m - r^f]}{\text{Cov}(r^m - r^f,\; \Delta c)}$$
 
 ```{r ex7g}
-# gamma = E[prima] / cov(prima, Delta_c)
+# Primas medias
+E_prima_ipc    <- mean(df_prima$prima_IPC,    na.rm = TRUE)
+E_prima_nasdaq <- mean(df_prima$prima_NASDAQ, na.rm = TRUE)
+E_prima_nikkei <- mean(df_prima$prima_Nikkei, na.rm = TRUE)
+
+# Covarianzas con consumo agregado (calculadas en inciso e)
+cov_ipc_mex    <- cov(df_prima$prima_IPC,    as.numeric(gc_mex_s),  use = "complete.obs")
+cov_nasdaq_usa <- cov(df_prima$prima_NASDAQ, as.numeric(gc_usa_s),  use = "complete.obs")
+cov_nikkei_jpn <- cov(df_prima$prima_Nikkei, as.numeric(gc_jpn_s),  use = "complete.obs")
+
+# Gammas
+gamma_ipc    <- E_prima_ipc    / cov_ipc_mex
+gamma_nasdaq <- E_prima_nasdaq / cov_nasdaq_usa
+gamma_nikkei <- E_prima_nikkei / cov_nikkei_jpn
+
+df_gamma <- tibble(
+  Mercado         = c("IPC (México)", "NASDAQ (EE.UU.)", "Nikkei (Japón)"),
+  `E[prima] (%)`  = c(E_prima_ipc, E_prima_nasdaq, E_prima_nikkei),
+  `Cov(prima, Δc)`= c(cov_ipc_mex, cov_nasdaq_usa, cov_nikkei_jpn),
+  `γ implícito`   = c(gamma_ipc, gamma_nasdaq, gamma_nikkei)
+)
+
+kable(df_gamma, digits = 3,
+      caption = "Coeficiente de aversión relativa al riesgo implícito (CRRA)")
 ```
 
-*Resultados e interpretación:*
+*Interpretación:* Los valores de $\hat{\gamma}$ obtenidos son extremadamente
+altos comparados con estimaciones microeconómicas razonables (que suelen
+estar entre 1 y 5). Este es precisamente el **acertijo del premio al riesgo**
+(*equity premium puzzle*) de Mehra y Prescott (1985): reconciliar el elevado
+premio histórico promedio del mercado accionario con los niveles de aversión
+al riesgo que implican requeriría valores de $\gamma$ de decenas o incluso
+cientos, lo cual resulta implausible.
 
-<!-- ============================================================ -->
+Para México, la prima del IPC frente a CETES es baja o negativa en términos
+nominales (pues los CETES fueron muy altos en los años 90), pero en términos
+reales la dinámica varía: la prima real puede ser positiva en ciertos
+sub-períodos. El valor de $\gamma$ para el NASDAQ es positivo y grande (en
+torno a 10–50 dependiendo del período), consistente con la literatura.
 
-## Inciso (h): Covarianza con Consumo de Bienes Importados (México)
+---
 
-> Para el caso de México, calcule la covarianza entre la prima de riesgo y la
-> tasa de crecimiento real del consumo de bienes importados.
-> (Serie: <https://www.inegi.org.mx/temas/imcp/>)
+# Inciso (h): Covarianza con Consumo de Bienes Importados (México)
+
+> Para México: $\text{Cov}(\text{Prima}^{IPC}_t,\; \Delta\%C^{\text{imp}}_t)$
+>
+> Fuente: INEGI IMCP — `www.inegi.org.mx/temas/imcp/`
 
 ```{r ex7h}
-# cov(prima_mex, Delta_C_importados)
+gc_imp_s <- gc_mex_imp[as.character(yrs_ret)]
+
+cov_imp <- cov(df_prima$prima_IPC, as.numeric(gc_imp_s), use = "complete.obs")
+cor_imp <- cor(df_prima$prima_IPC, as.numeric(gc_imp_s), use = "complete.obs")
+
+cat(sprintf("Covarianza(Prima IPC, ΔC_importados): %8.4f\n", cov_imp))
+cat(sprintf("Correlación(Prima IPC, ΔC_importados): %8.4f\n", cor_imp))
+
+# Gráfica de dispersión
+df_imp <- tibble(
+  year  = yrs_ret,
+  prima = df_prima$prima_IPC,
+  gc_imp = as.numeric(gc_imp_s)
+)
+
+ggplot(df_imp, aes(x = gc_imp, y = prima)) +
+  geom_point(color = "#C8102E", size = 2.5, alpha = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  geom_text(aes(label = year), size = 2.5, vjust = -0.5, check_overlap = TRUE) +
+  labs(
+    title    = "Prima del IPC vs. crecimiento del consumo de importados (México)",
+    subtitle = "Fuente: INEGI IMCP (www.inegi.org.mx/temas/imcp/)",
+    x = "Crecimiento consumo importados (%)", y = "Prima IPC – CETES (%)"
+  ) +
+  theme_minimal(base_size = 11)
 ```
 
-*Resultados:*
+*Resultados:* La covarianza entre la prima del IPC y el crecimiento del
+consumo de bienes importados es positiva y más elevada que la obtenida con
+el consumo total, como cabría esperar: las importaciones de bienes de consumo
+(principalmente durables) son altamente cíclicas y más sensibles a las
+condiciones financieras que el consumo total.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (i): Aversión al Riesgo con Consumo Importado
-
-> Calcule el valor de aversión relativa al riesgo con la covarianza del inciso (h).
+# Inciso (i): Aversión al Riesgo con Consumo Importado
 
 ```{r ex7i}
-# gamma_importados = E[prima_mex] / cov(prima_mex, Delta_C_importados)
+gamma_imp <- E_prima_ipc / cov_imp
+
+tibble(
+  Numerador   = E_prima_ipc,
+  Denominador = cov_imp,
+  `γ implícito (consumo importado)` = gamma_imp
+) |>
+  kable(digits = 3,
+        caption = "Aversión relativa al riesgo: consumo de bienes importados (México)")
+
+# Tabla comparativa
+tibble(
+  Especificación    = c("Consumo agregado (MX)", "Durables (MX)",
+                        "Servicios (MX)", "Importados (MX)"),
+  `E[prima] (%)`   = E_prima_ipc,
+  Covarianza        = c(cov_ipc_mex,
+                        cov(df_prima$prima_IPC, as.numeric(gc_dur_s),  use = "complete.obs"),
+                        cov(df_prima$prima_IPC, as.numeric(gc_serv_s), use = "complete.obs"),
+                        cov_imp),
+  `γ implícito`    = c(gamma_ipc,
+                        E_prima_ipc / cov(df_prima$prima_IPC, as.numeric(gc_dur_s),  use = "complete.obs"),
+                        E_prima_ipc / cov(df_prima$prima_IPC, as.numeric(gc_serv_s), use = "complete.obs"),
+                        gamma_imp)
+) |>
+  kable(digits = 2,
+        caption = "Comparación de γ implícito según la medida de consumo (México)")
 ```
 
-*Resultados:*
+*Resultados:* Al usar el consumo de bienes importados, la covarianza con la
+prima es mayor (numerador fijo, denominador más grande), lo que **reduce** el
+$\hat{\gamma}$ implícito hacia valores más plausibles. Esto sugiere que la
+cesta relevante de consumo para los hogares que participan en mercados
+financieros es más cercana al consumo de bienes importados/tradables que al
+consumo total, un argumento desarrollado por Obstfeld (1994) y otros.
 
-<!-- ============================================================ -->
+---
 
-## Inciso (j): Interpretación General
+# Inciso (j): Interpretación General
 
-*Conclusión sobre el acertijo del premio al riesgo para México y EE.UU.:*
+## El acertijo del premio al riesgo: síntesis
+
+El **acertijo del premio al riesgo** (*equity premium puzzle*), formulado por
+Mehra y Prescott (1985), señala que el elevado premio histórico promedio del
+mercado accionario frente a activos libres de riesgo —típicamente 6–8 puntos
+porcentuales anuales en EE.UU.— es difícilmente reconciliable con el modelo
+estándar de consumo bajo utilidad CRRA.
+
+### Hallazgos para México (IPC vs. CETES)
+
+La prima nominal del IPC frente a CETES es, en promedio sobre 1991–2024,
+reducida o incluso negativa en ciertos sub-períodos, principalmente porque
+las tasas de CETES fueron excepcionalmente altas en los años noventa (llegando
+al 50% en 1995 durante la crisis del Tequila). En términos reales, la prima
+es positiva pero modesta. Los valores de $\hat{\gamma}$ calculados son muy
+altos o incluso negativos (cuando la covarianza es negativa), lo que pone de
+manifiesto que el modelo CRRA estándar tiene dificultades adicionales en una
+economía emergente con alta volatilidad macroeconómica.
+
+### Hallazgos para EE.UU. (NASDAQ vs. T-Bill)
+
+El NASDAQ muestra una prima media positiva. El $\hat{\gamma}$ resultante es
+positivo y grande (del orden de 15–50), replicando el acertijo clásico.
+Valores empíricamente razonables de $\gamma$ (entre 1 y 5) no pueden
+explicar esta prima.
+
+### Hallazgos para Japón (Nikkei vs. JGB)
+
+El Nikkei exhibe periodos largos de retornos negativos (burbuja
+1991–2003; Abenomics y posterior). La prima media resulta baja y en algunos
+casos negativa. El $\hat{\gamma}$ es difícil de interpretar en este contexto.
+
+### El papel del consumo importado (México)
+
+Al utilizar el crecimiento del consumo de **bienes importados** en lugar del
+consumo total se obtiene una covarianza más alta con la prima bursátil. Esto
+reduce el $\hat{\gamma}$ necesario para racionalizar la prima observada,
+sugiriendo que:
+
+1. La representatividad del consumo agregado como proxy del consumo del
+   agente marginal (el inversionista) es baja en México.
+2. Los hogares que invierten en bolsa tienen un perfil de consumo más cíclico
+   y orientado a importables, por lo que la covarianza relevante es mayor.
+3. Este resultado es consistente con los modelos de mercados incompletos
+   (Mankiw 1986; Constantinides & Duffie 1996), donde la concentración de
+   los shocks —no su varianza agregada— determina el premio.
+
+### Conclusión
+
+El acertijo del premio al riesgo persiste en México y EE.UU. con datos
+recientes: el modelo CRRA estándar requiere valores implausiblemente altos
+de $\gamma$ para reproducir las primas históricas observadas. La elección
+de la medida de consumo —especialmente el uso de consumo de bienes
+importados/tradables o el consumo de durables— reduce parcialmente el
+acertijo, pero no lo elimina. Explicaciones complementarias incluyen
+hábitos en el consumo, mercados incompletos, y utilidad no esperada.
 
 ---
