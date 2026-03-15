@@ -1,0 +1,155 @@
+---
+title: "Ejercicio 7 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 7: Acertijo del Premio al Riesgo
+
+> **Instrucciones:** Estudie el acertijo del premio al riesgo para México y
+> EE.UU.
+> *(3 horas, 0.5 puntos cada inciso)*
+
+```{r ex7-setup}
+# Cargue los datos del IPC, NASDAQ y el índice de acciones del país asignado
+# Eq 1: Japón | Eq 2: Suecia | Eq 3: España | Eq 4: Brasil | Eq 5: Canadá
+```
+
+## Inciso (a): Índices de Precios de Acciones (desde 1990)
+
+> Consiga los valores anuales del IPC (BMV), el NASDAQ y otro índice asignado.
+
+```{r ex7a}
+# Cargue los índices bursátiles
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Tasa de Retorno Nominal
+
+> Calcule la tasa de retorno nominal anual para cada índice.
+
+```{r ex7b}
+# r_t = (P_t - P_{t-1}) / P_{t-1}
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Tasa de Interés a un Año
+
+> Consiga los valores promedio anual de la tasa de interés a un año para los
+> tres países.
+
+```{r ex7c}
+# Cargue tasas de interés
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Prima de Riesgo Accionaria
+
+> Calcule la diferencia entre el retorno del mercado de valores y el retorno de
+> invertir a la tasa a un año.
+
+```{r ex7d}
+# prima = retorno_mercado - tasa_libre_riesgo
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Covarianza con Crecimiento del Consumo Agregado
+
+> Calcule la covarianza entre la prima de riesgo y la tasa de crecimiento real
+> del consumo agregado de cada economía.
+
+```{r ex7e}
+# cov(prima, Delta_C_agregado)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Covarianza con Consumo de Bienes Durables y Servicios
+
+> Calcule la covarianza entre la prima de riesgo y la tasa de crecimiento real
+> del consumo de bienes durables y de servicios.
+
+```{r ex7f}
+# cov(prima, Delta_C_durables)
+# cov(prima, Delta_C_servicios)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (g): Aversión Relativa al Riesgo (CRRA)
+
+> Calcule el valor de aversión relativa al riesgo implícito, dado el supuesto de
+> utilidad CRRA:
+> $$\gamma = \frac{E[r_m - r_f]}{\text{Cov}(r_m - r_f,\; \Delta c)}$$
+
+```{r ex7g}
+# gamma = E[prima] / cov(prima, Delta_c)
+```
+
+*Resultados e interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (h): Covarianza con Consumo de Bienes Importados (México)
+
+> Para el caso de México, calcule la covarianza entre la prima de riesgo y la
+> tasa de crecimiento real del consumo de bienes importados.
+> (Serie: <https://www.inegi.org.mx/temas/imcp/>)
+
+```{r ex7h}
+# cov(prima_mex, Delta_C_importados)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (i): Aversión al Riesgo con Consumo Importado
+
+> Calcule el valor de aversión relativa al riesgo con la covarianza del inciso (h).
+
+```{r ex7i}
+# gamma_importados = E[prima_mex] / cov(prima_mex, Delta_C_importados)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (j): Interpretación General
+
+*Conclusión sobre el acertijo del premio al riesgo para México y EE.UU.:*
+
+---

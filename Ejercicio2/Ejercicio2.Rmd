@@ -1,0 +1,314 @@
+---
+title: "Ejercicio 2 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{booktabs}
+  - \usepackage{float}
+  - \usepackage{geometry}
+  - \geometry{margin=1in}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 2: Simulación de Ingreso Permanente
+
+> **Instrucciones:** Simule una variedad de agentes con ingresos permanentes e
+> ingresos transitorios diferentes y calcule la relación entre consumo e ingreso
+> bajo diversos supuestos de varianza.
+> *(2 horas, 1 punto cada inciso)*
+
+```{r ex2-params}
+# Parámetros globales — ajuste según sus supuestos
+set.seed(42)
+
+n_personas  <- 20    # número de individuos
+n_periodos  <- 30    # observaciones por individuo
+mu_Y_P      <- 10    # media del ingreso permanente
+sigma_P     <- 4     # varianza σ^P  (ajuste para el inciso g)
+sigma_T     <- 2     # varianza σ^T  (ajuste para el inciso h)
+sigma_eps   <- 1     # varianza σ^ε  (ajuste para el inciso i)
+```
+
+## Inciso (a): Ingresos Permanentes $Y^P_i$
+
+> Cree un vector de 20 ingresos permanentes aleatorios $Y^P_i$, distribuidos
+> normalmente, con media 10 y varianza $\sigma^P$. Cree 20 vectores (cada uno
+> representa una persona) con 30 observaciones idénticas del ingreso permanente.
+> Grafíquelos (eje x: persona; eje y: ingreso permanente).
+
+```{r ex2a}
+# --- Ingreso permanente ---
+Y_P <- rnorm(n_personas, mean = mu_Y_P, sd = sqrt(sigma_P))
+
+# Matriz: cada columna = una persona, cada fila = período
+Y_P_mat <- matrix(rep(Y_P, each = n_periodos),
+                  nrow = n_periodos, ncol = n_personas)
+
+# Data frame largo para graficar
+df_YP <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y_P     = as.vector(Y_P_mat)
+)
+
+ggplot(df_YP, aes(x = persona, y = Y_P, group = persona)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_point(data = data.frame(persona = 1:n_personas, Y_P = Y_P),
+             color = "darkblue", size = 2) +
+  labs(title = "Ingreso Permanente por Persona",
+       x = "Persona", y = expression(Y^P)) +
+  theme_minimal()
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Ingresos Transitorios $Y^T_{i,t}$
+
+> Cree 20 vectores de 30 ingresos transitorios aleatorios $Y^T_{i,t}$,
+> distribuidos normalmente, con media 0 y varianza $\sigma^T$. Grafíquelos.
+
+```{r ex2b}
+# --- Ingreso transitorio ---
+Y_T_mat <- matrix(rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(sigma_T)),
+                  nrow = n_periodos, ncol = n_personas)
+
+df_YT <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y_T     = as.vector(Y_T_mat)
+)
+
+ggplot(df_YT, aes(x = periodo, y = Y_T, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Ingreso Transitorio por Persona y Período",
+       x = "Período", y = expression(Y^T), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Ingreso Total $Y_{i,t}$
+
+> Cree 20 vectores de 30 ingresos totales $Y_{i,t}$, sumando el ingreso
+> transitorio y el permanente. Grafíquelos.
+
+```{r ex2c}
+# --- Ingreso total ---
+Y_mat <- Y_P_mat + Y_T_mat
+
+df_Y <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y       = as.vector(Y_mat)
+)
+
+ggplot(df_Y, aes(x = periodo, y = Y, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Ingreso Total por Persona y Período",
+       x = "Período", y = expression(Y), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Errores de Medición $\epsilon_{i,t}$
+
+> Cree 20 vectores de 30 errores de medición $\epsilon_{i,t}$, distribuidos
+> normalmente, con media 0 y varianza $\sigma^\epsilon > 0$. Grafíquelos.
+
+```{r ex2d}
+# --- Errores de medición ---
+eps_mat <- matrix(rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(sigma_eps)),
+                  nrow = n_periodos, ncol = n_personas)
+
+df_eps <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  eps     = as.vector(eps_mat)
+)
+
+ggplot(df_eps, aes(x = periodo, y = eps, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Errores de Medición por Persona y Período",
+       x = "Período", y = expression(epsilon), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Consumo $C_{i,t}$
+
+> Cree 20 vectores de 30 consumos $C_{i,t}$ de acuerdo a la regla:
+> $$C_{i,t} = Y^P_i + 0.1 Y^T_{i,t} + \epsilon_{i,t}$$
+> Grafíquelos.
+
+```{r ex2e}
+# --- Consumo ---
+C_mat <- Y_P_mat + 0.1 * Y_T_mat + eps_mat
+
+df_C <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  C       = as.vector(C_mat)
+)
+
+ggplot(df_C, aes(x = periodo, y = C, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Consumo por Persona y Período",
+       x = "Período", y = expression(C), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Estimación $C_{i,t} = \alpha + \beta Y_{i,t} + \epsilon_{i,t}$
+
+> Estime la relación lineal entre ingreso total y consumo. Describa el resultado
+> y grafique la relación entre las observaciones de consumo y las de ingreso.
+
+```{r ex2f}
+# --- Regresión ---
+df_reg <- data.frame(C = as.vector(C_mat), Y = as.vector(Y_mat))
+modelo  <- lm(C ~ Y, data = df_reg)
+summary(modelo)
+
+ggplot(df_reg, aes(x = Y, y = C)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  labs(title = expression(paste("Consumo vs. Ingreso Total: ",
+                                C[it] == alpha + beta*Y[it] + epsilon[it])),
+       x = "Ingreso Total Y", y = "Consumo C") +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (g): $\hat{\beta}$ vs. $\sigma^P$
+
+> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^P$.
+
+```{r ex2g}
+sigma_P_vals <- seq(0.5, 20, by = 0.5)
+
+beta_sigmaP <- sapply(sigma_P_vals, function(sp) {
+  YP_   <- rnorm(n_personas, mean = mu_Y_P, sd = sqrt(sp))
+  YPm   <- matrix(rep(YP_, each = n_periodos), nrow = n_periodos)
+  YTm   <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_T)), nrow = n_periodos)
+  Em    <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_eps)), nrow = n_periodos)
+  Cm    <- YPm + 0.1 * YTm + Em
+  Ym    <- YPm + YTm
+  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
+})
+
+df_g <- data.frame(sigma_P = sigma_P_vals, beta_hat = beta_sigmaP)
+
+ggplot(df_g, aes(x = sigma_P, y = beta_hat)) +
+  geom_line(color = "steelblue") +
+  geom_point() +
+  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^P)),
+       x = expression(sigma^P), y = expression(hat(beta))) +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (h): $\hat{\beta}$ vs. $\sigma^T$
+
+> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^T$.
+
+```{r ex2h}
+sigma_T_vals <- seq(0.1, 20, by = 0.5)
+
+beta_sigmaT <- sapply(sigma_T_vals, function(st) {
+  YPm <- matrix(rep(rnorm(n_personas, mu_Y_P, sqrt(sigma_P)), each = n_periodos),
+                nrow = n_periodos)
+  YTm <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(st)), nrow = n_periodos)
+  Em  <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_eps)), nrow = n_periodos)
+  Cm  <- YPm + 0.1 * YTm + Em
+  Ym  <- YPm + YTm
+  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
+})
+
+df_h <- data.frame(sigma_T = sigma_T_vals, beta_hat = beta_sigmaT)
+
+ggplot(df_h, aes(x = sigma_T, y = beta_hat)) +
+  geom_line(color = "darkorange") +
+  geom_point() +
+  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^T)),
+       x = expression(sigma^T), y = expression(hat(beta))) +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (i): $\hat{\beta}$ vs. $\sigma^\epsilon$
+
+> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^\epsilon$.
+
+```{r ex2i}
+sigma_eps_vals <- seq(0.1, 20, by = 0.5)
+
+beta_sigmaE <- sapply(sigma_eps_vals, function(se) {
+  YPm <- matrix(rep(rnorm(n_personas, mu_Y_P, sqrt(sigma_P)), each = n_periodos),
+                nrow = n_periodos)
+  YTm <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_T)), nrow = n_periodos)
+  Em  <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(se)), nrow = n_periodos)
+  Cm  <- YPm + 0.1 * YTm + Em
+  Ym  <- YPm + YTm
+  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
+})
+
+df_i <- data.frame(sigma_eps = sigma_eps_vals, beta_hat = beta_sigmaE)
+
+ggplot(df_i, aes(x = sigma_eps, y = beta_hat)) +
+  geom_line(color = "darkgreen") +
+  geom_point() +
+  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^epsilon)),
+       x = expression(sigma^epsilon), y = expression(hat(beta))) +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+---

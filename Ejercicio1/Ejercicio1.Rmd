@@ -1,0 +1,75 @@
+---
+title: "Ejercicio 1 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 1: Problemas del libro (Romer, 5a Ed.)
+
+> **Instrucciones:** Resuelva los ejercicios 8.2, 8.3, 8.6 y 8.12 con ayuda de su
+> laboratorista y entregue las soluciones a máquina, utilizando LaTeX.
+> *(4 horas, 1 punto cada inciso)*
+
+## Ejercicio 8.2
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.2 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.2
+$$
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Ejercicio 8.3
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.3 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.3
+$$
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Ejercicio 8.6
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.6 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.6
+$$
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Ejercicio 8.12
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.12 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.12
+$$
+
+*Respuesta:*
+
+---

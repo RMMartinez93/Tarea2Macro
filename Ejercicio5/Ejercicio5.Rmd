@@ -1,0 +1,88 @@
+---
+title: "Ejercicio 5 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 5: Comportamiento Reciente del Consumo en México
+
+> **Instrucciones:** Describa el comportamiento reciente del consumo en México
+> y sus determinantes.
+> *(Sin horas asignadas explícitamente)*
+
+## Inciso (a): Datos de Consumo Agregado y Componentes
+
+> Obtenga datos trimestrales de México para $C$, el consumo de bienes importados
+> y el consumo de bienes nacionales.
+
+```{r ex5a}
+# Cargue datos del INEGI
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Tipo de Cambio y Tasa de Interés Real
+
+> Obtenga datos para el tipo de cambio y la tasa de interés real del Banco de México.
+
+```{r ex5b}
+# Cargue datos del Banco de México
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Gráficas de Series de Tiempo
+
+> Grafique las series de tiempo juntas para compararlas visualmente.
+
+```{r ex5c}
+# Gráficas
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Series Filtradas (Tasa de Cambio Anual)
+
+> Filtre todas las series obteniendo su tasa de cambio anual. Grafique las series
+> filtradas y obtenga la matriz de varianzas y covarianzas.
+
+```{r ex5d}
+# Tasas de cambio anual
+# Gráfica
+# Matriz de varianzas-covarianzas
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Conclusión sobre Tipo de Cambio y Tasa de Interés
+
+> Redacte una conclusión sobre el impacto de la tasa de interés y el tipo de
+> cambio sobre el consumo.
+
+*Conclusión:*
+
+---

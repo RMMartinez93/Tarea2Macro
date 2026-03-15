@@ -1,0 +1,186 @@
+---
+title: "Ejercicio 3 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 3: Consumo Agregado en México
+
+> **Instrucciones:** Estudie el consumo agregado en México y en **[país asignado
+> al equipo]**, siguiendo los pasos indicados.
+> *(3 horas, 0.5 puntos cada inciso)*
+
+```{r ex3-setup}
+# Cargue aquí los paquetes necesarios para manejo de datos INEGI / BandPassFilter
+# library(mFilter)    # filtros HP y Band-Pass
+# library(neverhpfilter) # alternativa para HP
+# Cargue los datos descargados del INEGI
+```
+
+## Inciso (a): Obtención de Datos
+
+> Obtenga datos trimestrales de México para $C$, $C_s$, $C_b$, $Y$, $I$, $G$ y
+> $NX$ en términos reales, entre 1980 y el cuarto trimestre de 2025.
+
+```{r ex3a}
+# Cargue los datos del INEGI aquí
+# Ejemplo:
+# datos_mex <- read.csv("datos_inegi.csv")
+```
+
+*Descripción de las fuentes y variables obtenidas:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Gráficas de Series de Tiempo
+
+> Grafique las series juntas para compararlas visualmente, en dos versiones:
+> a) valor real original y b) logaritmo natural.
+
+```{r ex3b-niveles}
+# Gráfica en niveles
+```
+
+```{r ex3b-logs}
+# Gráfica en logaritmos
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Series Filtradas / Cíclicas
+
+### Tasas de Crecimiento $\Delta\%$
+
+> Construya $\Delta\%a_t = (a_t - a_{t-1})/a_{t-1}$ (cambios vs. año anterior).
+> Grafique y obtenga la matriz de varianzas y covarianzas.
+
+```{r ex3c-growth}
+# Calcule tasas de crecimiento
+# Grafique
+# Matriz de varianzas-covarianzas
+```
+
+*Conclusión parcial:*
+
+### Filtro HP
+
+> Construya la versión filtrada HP (parte cíclica). Grafique y obtenga la
+> matriz de varianzas y covarianzas.
+
+```{r ex3c-hp}
+# library(mFilter)
+# hp_result <- hpfilter(serie, freq = 1600)
+# ciclo_hp  <- hp_result$cycle
+```
+
+*Conclusión parcial:*
+
+### Filtro Band-Pass
+
+> Construya la versión filtrada Band-Pass. Grafique y obtenga la matriz de
+> varianzas y covarianzas.
+
+```{r ex3c-bp}
+# library(mFilter)
+# bp_result <- bkfilter(serie)
+# ciclo_bp  <- bp_result$cycle
+```
+
+*Conclusión parcial:*
+
+### Filtro Beveridge-Nelson
+
+> Construya la versión filtrada Beveridge-Nelson. Grafique y obtenga la matriz
+> de varianzas y covarianzas.
+
+```{r ex3c-bn}
+# Implementación del filtro Beveridge-Nelson
+```
+
+*Conclusión parcial:*
+
+### Conclusión Comparativa de Filtros
+
+*Redacte aquí una conclusión comparando las distintas formas de eliminar la tendencia:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Consumo vs. Producto
+
+> Grafique la relación $(\Delta\%Y_t,\; \Delta\%C_t)$ para cada tipo de consumo
+> (consumo total, servicios, bienes).
+
+```{r ex3d}
+# Gráficas de dispersión: consumo en eje x, producto en eje y
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Volatilidad de las Tasas de Crecimiento
+
+> ¿Qué es más volátil, el ingreso o el consumo agregado? ¿Cuál de los consumos
+> es más volátil (servicios, durables, no durables)?
+
+```{r ex3e}
+# Calcule desviaciones estándar de las tasas de crecimiento
+```
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Estimación de Modelos Lineales
+
+> Para cada tipo de consumo, estime los cuatro modelos lineales:
+> 1. $C_t = a + bY_t + \epsilon_t$
+> 2. $\Delta\%C_t = a + b\Delta\%Y_t + \epsilon_t$
+> 3. $\Delta\%C_t = a + b\Delta\%Y_{t-1} + \epsilon_t$
+> 4. $c_t = a + by_t + \epsilon_t$ (minúsculas = logaritmos)
+
+```{r ex3f-total}
+# Modelo 1: Niveles
+# Modelo 2: Tasas de crecimiento contemporáneas
+# Modelo 3: Tasas de crecimiento rezagadas
+# Modelo 4: Log-log
+```
+
+```{r ex3f-servicios}
+# Repita para consumo de servicios
+```
+
+```{r ex3f-bienes}
+# Repita para consumo de bienes
+```
+
+*Tabla de resultados (coeficientes, estadísticos-t, $R^2$):*
+
+<!-- ============================================================ -->
+
+## Inciso (g): Hipótesis de Ingreso Permanente para México
+
+> Explique qué se podría concluir sobre la Hipótesis de Ingreso Permanente (HIP)
+> para México a partir de los coeficientes encontrados.
+
+*Conclusión:*
+
+---

@@ -1,0 +1,87 @@
+---
+title: "Ejercicio 6 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 6: Riqueza Neta de los Hogares (ENFIH-2019)
+
+> **Instrucciones:** Estudie el nivel de riqueza neta de los hogares según la
+> encuesta ENFIH-2019 del INEGI.
+> *(1 hora, 0.5 puntos cada inciso)*
+
+```{r ex6-setup}
+# Cargue los microdatos de la ENFIH-2019
+# enfih <- read.csv("enfih2019.csv")
+```
+
+## Inciso (a): Microdatos de la ENFIH
+
+> Obtenga los microdatos de la ENFIH.
+
+*Descripción del proceso de obtención de los datos:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Riqueza Neta por Tamaño de Localidad
+
+> Tabule el nivel de riqueza neta de los hogares de acuerdo al tamaño de la
+> localidad en la que radican.
+
+```{r ex6b}
+# Tabulado usando el código provisto por el INEGI
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Dispersión: Ingreso Corriente vs. Riqueza Neta
+
+> Haga una gráfica de dispersión de la relación entre el ingreso corriente
+> efectivo y la riqueza neta (puede usarse una muestra de hogares).
+
+```{r ex6c}
+# Gráfica de dispersión
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Forma de Atender Gastos Imprevistos
+
+> Tabulado de las respuestas sobre cómo atienden gastos imprevistos, por tamaño
+> de localidad.
+
+```{r ex6d}
+# Tabulado
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Interpretación
+
+> Interprete la gráfica y el tabulado.
+
+*Conclusión:*
+
+---

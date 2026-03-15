@@ -1,0 +1,952 @@
+---
+title: "Tarea 2: Consumo, Macroeconomía 2"
+author: "Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez Olivera"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{booktabs}
+  - \usepackage{float}
+  - \usepackage{geometry}
+  - \geometry{margin=1in}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+---
+
+# Ejercicio 1: Problemas del libro (Romer, 5a Ed.)
+
+> **Instrucciones:** Resuelva los ejercicios 8.2, 8.3, 8.6 y 8.12 con ayuda de su
+> laboratorista y entregue las soluciones a máquina, utilizando LaTeX.
+> *(4 horas, 1 punto cada inciso)*
+
+## Ejercicio 8.2
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.2 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.2
+$$
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Ejercicio 8.3
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.3 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.3
+$$
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Ejercicio 8.6
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.6 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.6
+$$
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Ejercicio 8.12
+
+<!-- SOLUCIÓN: Escriba aquí la solución al ejercicio 8.12 -->
+
+$$
+% Inserte aquí las ecuaciones del ejercicio 8.12
+$$
+
+*Respuesta:*
+
+---
+
+# Ejercicio 2: Simulación de Ingreso Permanente
+
+> **Instrucciones:** Simule una variedad de agentes con ingresos permanentes e
+> ingresos transitorios diferentes y calcule la relación entre consumo e ingreso
+> bajo diversos supuestos de varianza.
+> *(2 horas, 1 punto cada inciso)*
+
+```{r ex2-params}
+# Parámetros globales — ajuste según sus supuestos
+set.seed(42)
+
+n_personas  <- 20    # número de individuos
+n_periodos  <- 30    # observaciones por individuo
+mu_Y_P      <- 10    # media del ingreso permanente
+sigma_P     <- 4     # varianza σ^P  (ajuste para el inciso g)
+sigma_T     <- 2     # varianza σ^T  (ajuste para el inciso h)
+sigma_eps   <- 1     # varianza σ^ε  (ajuste para el inciso i)
+```
+
+## Inciso (a): Ingresos Permanentes $Y^P_i$
+
+> Cree un vector de 20 ingresos permanentes aleatorios $Y^P_i$, distribuidos
+> normalmente, con media 10 y varianza $\sigma^P$. Cree 20 vectores (cada uno
+> representa una persona) con 30 observaciones idénticas del ingreso permanente.
+> Grafíquelos (eje x: persona; eje y: ingreso permanente).
+
+```{r ex2a}
+# --- Ingreso permanente ---
+Y_P <- rnorm(n_personas, mean = mu_Y_P, sd = sqrt(sigma_P))
+
+# Matriz: cada columna = una persona, cada fila = período
+Y_P_mat <- matrix(rep(Y_P, each = n_periodos),
+                  nrow = n_periodos, ncol = n_personas)
+
+# Data frame largo para graficar
+df_YP <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y_P     = as.vector(Y_P_mat)
+)
+
+ggplot(df_YP, aes(x = persona, y = Y_P, group = persona)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_point(data = data.frame(persona = 1:n_personas, Y_P = Y_P),
+             color = "darkblue", size = 2) +
+  labs(title = "Ingreso Permanente por Persona",
+       x = "Persona", y = expression(Y^P)) +
+  theme_minimal()
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Ingresos Transitorios $Y^T_{i,t}$
+
+> Cree 20 vectores de 30 ingresos transitorios aleatorios $Y^T_{i,t}$,
+> distribuidos normalmente, con media 0 y varianza $\sigma^T$. Grafíquelos.
+
+```{r ex2b}
+# --- Ingreso transitorio ---
+Y_T_mat <- matrix(rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(sigma_T)),
+                  nrow = n_periodos, ncol = n_personas)
+
+df_YT <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y_T     = as.vector(Y_T_mat)
+)
+
+ggplot(df_YT, aes(x = periodo, y = Y_T, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Ingreso Transitorio por Persona y Período",
+       x = "Período", y = expression(Y^T), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Ingreso Total $Y_{i,t}$
+
+> Cree 20 vectores de 30 ingresos totales $Y_{i,t}$, sumando el ingreso
+> transitorio y el permanente. Grafíquelos.
+
+```{r ex2c}
+# --- Ingreso total ---
+Y_mat <- Y_P_mat + Y_T_mat
+
+df_Y <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y       = as.vector(Y_mat)
+)
+
+ggplot(df_Y, aes(x = periodo, y = Y, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Ingreso Total por Persona y Período",
+       x = "Período", y = expression(Y), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Errores de Medición $\epsilon_{i,t}$
+
+> Cree 20 vectores de 30 errores de medición $\epsilon_{i,t}$, distribuidos
+> normalmente, con media 0 y varianza $\sigma^\epsilon > 0$. Grafíquelos.
+
+```{r ex2d}
+# --- Errores de medición ---
+eps_mat <- matrix(rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(sigma_eps)),
+                  nrow = n_periodos, ncol = n_personas)
+
+df_eps <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  eps     = as.vector(eps_mat)
+)
+
+ggplot(df_eps, aes(x = periodo, y = eps, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Errores de Medición por Persona y Período",
+       x = "Período", y = expression(epsilon), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Consumo $C_{i,t}$
+
+> Cree 20 vectores de 30 consumos $C_{i,t}$ de acuerdo a la regla:
+> $$C_{i,t} = Y^P_i + 0.1 Y^T_{i,t} + \epsilon_{i,t}$$
+> Grafíquelos.
+
+```{r ex2e}
+# --- Consumo ---
+C_mat <- Y_P_mat + 0.1 * Y_T_mat + eps_mat
+
+df_C <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  C       = as.vector(C_mat)
+)
+
+ggplot(df_C, aes(x = periodo, y = C, color = factor(persona))) +
+  geom_line(alpha = 0.6) +
+  labs(title = "Consumo por Persona y Período",
+       x = "Período", y = expression(C), color = "Persona") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+*Descripción del resultado:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Estimación $C_{i,t} = \alpha + \beta Y_{i,t} + \epsilon_{i,t}$
+
+> Estime la relación lineal entre ingreso total y consumo. Describa el resultado
+> y grafique la relación entre las observaciones de consumo y las de ingreso.
+
+```{r ex2f}
+# --- Regresión ---
+df_reg <- data.frame(C = as.vector(C_mat), Y = as.vector(Y_mat))
+modelo  <- lm(C ~ Y, data = df_reg)
+summary(modelo)
+
+ggplot(df_reg, aes(x = Y, y = C)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  labs(title = expression(paste("Consumo vs. Ingreso Total: ",
+                                C[it] == alpha + beta*Y[it] + epsilon[it])),
+       x = "Ingreso Total Y", y = "Consumo C") +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (g): $\hat{\beta}$ vs. $\sigma^P$
+
+> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^P$.
+
+```{r ex2g}
+sigma_P_vals <- seq(0.5, 20, by = 0.5)
+
+beta_sigmaP <- sapply(sigma_P_vals, function(sp) {
+  YP_   <- rnorm(n_personas, mean = mu_Y_P, sd = sqrt(sp))
+  YPm   <- matrix(rep(YP_, each = n_periodos), nrow = n_periodos)
+  YTm   <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_T)), nrow = n_periodos)
+  Em    <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_eps)), nrow = n_periodos)
+  Cm    <- YPm + 0.1 * YTm + Em
+  Ym    <- YPm + YTm
+  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
+})
+
+df_g <- data.frame(sigma_P = sigma_P_vals, beta_hat = beta_sigmaP)
+
+ggplot(df_g, aes(x = sigma_P, y = beta_hat)) +
+  geom_line(color = "steelblue") +
+  geom_point() +
+  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^P)),
+       x = expression(sigma^P), y = expression(hat(beta))) +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (h): $\hat{\beta}$ vs. $\sigma^T$
+
+> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^T$.
+
+```{r ex2h}
+sigma_T_vals <- seq(0.1, 20, by = 0.5)
+
+beta_sigmaT <- sapply(sigma_T_vals, function(st) {
+  YPm <- matrix(rep(rnorm(n_personas, mu_Y_P, sqrt(sigma_P)), each = n_periodos),
+                nrow = n_periodos)
+  YTm <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(st)), nrow = n_periodos)
+  Em  <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_eps)), nrow = n_periodos)
+  Cm  <- YPm + 0.1 * YTm + Em
+  Ym  <- YPm + YTm
+  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
+})
+
+df_h <- data.frame(sigma_T = sigma_T_vals, beta_hat = beta_sigmaT)
+
+ggplot(df_h, aes(x = sigma_T, y = beta_hat)) +
+  geom_line(color = "darkorange") +
+  geom_point() +
+  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^T)),
+       x = expression(sigma^T), y = expression(hat(beta))) +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (i): $\hat{\beta}$ vs. $\sigma^\epsilon$
+
+> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^\epsilon$.
+
+```{r ex2i}
+sigma_eps_vals <- seq(0.1, 20, by = 0.5)
+
+beta_sigmaE <- sapply(sigma_eps_vals, function(se) {
+  YPm <- matrix(rep(rnorm(n_personas, mu_Y_P, sqrt(sigma_P)), each = n_periodos),
+                nrow = n_periodos)
+  YTm <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_T)), nrow = n_periodos)
+  Em  <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(se)), nrow = n_periodos)
+  Cm  <- YPm + 0.1 * YTm + Em
+  Ym  <- YPm + YTm
+  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
+})
+
+df_i <- data.frame(sigma_eps = sigma_eps_vals, beta_hat = beta_sigmaE)
+
+ggplot(df_i, aes(x = sigma_eps, y = beta_hat)) +
+  geom_line(color = "darkgreen") +
+  geom_point() +
+  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^epsilon)),
+       x = expression(sigma^epsilon), y = expression(hat(beta))) +
+  theme_minimal()
+```
+
+*Interpretación:*
+
+---
+
+# Ejercicio 3: Consumo Agregado en México
+
+> **Instrucciones:** Estudie el consumo agregado en México y en **[país asignado
+> al equipo]**, siguiendo los pasos indicados.
+> *(3 horas, 0.5 puntos cada inciso)*
+
+```{r ex3-setup}
+# Cargue aquí los paquetes necesarios para manejo de datos INEGI / BandPassFilter
+# library(mFilter)    # filtros HP y Band-Pass
+# library(neverhpfilter) # alternativa para HP
+# Cargue los datos descargados del INEGI
+```
+
+## Inciso (a): Obtención de Datos
+
+> Obtenga datos trimestrales de México para $C$, $C_s$, $C_b$, $Y$, $I$, $G$ y
+> $NX$ en términos reales, entre 1980 y el cuarto trimestre de 2025.
+
+```{r ex3a}
+# Cargue los datos del INEGI aquí
+# Ejemplo:
+# datos_mex <- read.csv("datos_inegi.csv")
+```
+
+*Descripción de las fuentes y variables obtenidas:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Gráficas de Series de Tiempo
+
+> Grafique las series juntas para compararlas visualmente, en dos versiones:
+> a) valor real original y b) logaritmo natural.
+
+```{r ex3b-niveles}
+# Gráfica en niveles
+```
+
+```{r ex3b-logs}
+# Gráfica en logaritmos
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Series Filtradas / Cíclicas
+
+### Tasas de Crecimiento $\Delta\%$
+
+> Construya $\Delta\%a_t = (a_t - a_{t-1})/a_{t-1}$ (cambios vs. año anterior).
+> Grafique y obtenga la matriz de varianzas y covarianzas.
+
+```{r ex3c-growth}
+# Calcule tasas de crecimiento
+# Grafique
+# Matriz de varianzas-covarianzas
+```
+
+*Conclusión parcial:*
+
+### Filtro HP
+
+> Construya la versión filtrada HP (parte cíclica). Grafique y obtenga la
+> matriz de varianzas y covarianzas.
+
+```{r ex3c-hp}
+# library(mFilter)
+# hp_result <- hpfilter(serie, freq = 1600)
+# ciclo_hp  <- hp_result$cycle
+```
+
+*Conclusión parcial:*
+
+### Filtro Band-Pass
+
+> Construya la versión filtrada Band-Pass. Grafique y obtenga la matriz de
+> varianzas y covarianzas.
+
+```{r ex3c-bp}
+# library(mFilter)
+# bp_result <- bkfilter(serie)
+# ciclo_bp  <- bp_result$cycle
+```
+
+*Conclusión parcial:*
+
+### Filtro Beveridge-Nelson
+
+> Construya la versión filtrada Beveridge-Nelson. Grafique y obtenga la matriz
+> de varianzas y covarianzas.
+
+```{r ex3c-bn}
+# Implementación del filtro Beveridge-Nelson
+```
+
+*Conclusión parcial:*
+
+### Conclusión Comparativa de Filtros
+
+*Redacte aquí una conclusión comparando las distintas formas de eliminar la tendencia:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Consumo vs. Producto
+
+> Grafique la relación $(\Delta\%Y_t,\; \Delta\%C_t)$ para cada tipo de consumo
+> (consumo total, servicios, bienes).
+
+```{r ex3d}
+# Gráficas de dispersión: consumo en eje x, producto en eje y
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Volatilidad de las Tasas de Crecimiento
+
+> ¿Qué es más volátil, el ingreso o el consumo agregado? ¿Cuál de los consumos
+> es más volátil (servicios, durables, no durables)?
+
+```{r ex3e}
+# Calcule desviaciones estándar de las tasas de crecimiento
+```
+
+*Respuesta:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Estimación de Modelos Lineales
+
+> Para cada tipo de consumo, estime los cuatro modelos lineales:
+> 1. $C_t = a + bY_t + \epsilon_t$
+> 2. $\Delta\%C_t = a + b\Delta\%Y_t + \epsilon_t$
+> 3. $\Delta\%C_t = a + b\Delta\%Y_{t-1} + \epsilon_t$
+> 4. $c_t = a + by_t + \epsilon_t$ (minúsculas = logaritmos)
+
+```{r ex3f-total}
+# Modelo 1: Niveles
+# Modelo 2: Tasas de crecimiento contemporáneas
+# Modelo 3: Tasas de crecimiento rezagadas
+# Modelo 4: Log-log
+```
+
+```{r ex3f-servicios}
+# Repita para consumo de servicios
+```
+
+```{r ex3f-bienes}
+# Repita para consumo de bienes
+```
+
+*Tabla de resultados (coeficientes, estadísticos-t, $R^2$):*
+
+<!-- ============================================================ -->
+
+## Inciso (g): Hipótesis de Ingreso Permanente para México
+
+> Explique qué se podría concluir sobre la Hipótesis de Ingreso Permanente (HIP)
+> para México a partir de los coeficientes encontrados.
+
+*Conclusión:*
+
+---
+
+# Ejercicio 4: Consumo de Individuos en México (ENIGH)
+
+> **Instrucciones:** Estudie el consumo de los individuos en México usando datos
+> de la ENIGH.
+> *(1 hora, 0.5 puntos cada inciso)*
+
+```{r ex4-setup}
+# Cargue los microdatos de la ENIGH correspondientes a su año asignado
+# Grupo 1: 2024 | Grupo 2: 2022 | Grupo 3: 2020 | etc.
+# enigh <- read.csv("enigh_XXXX.csv")
+```
+
+## Inciso (a): Descarga de la ENIGH
+
+> Baje los datos del año asignado al grupo de la ENIGH (INEGI).
+
+*Descripción del proceso de descarga y las variables seleccionadas:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Hogares, Ingreso y Gasto Promedio
+
+> Establezca el número de hogares entrevistados, el ingreso y gasto promedio, y
+> utilice los factores de expansión para calcular el ingreso y gasto promedio de
+> todos los hogares mexicanos.
+
+```{r ex4b}
+# Número de hogares
+# Ingreso y gasto promedio sin factor de expansión
+# Ingreso y gasto promedio con factor de expansión
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Relación Ingreso-Gasto (Muestra Completa)
+
+> Estime una relación entre ingreso y gasto de las familias entrevistadas.
+
+```{r ex4c}
+# modelo_c <- lm(gasto ~ ingreso, data = enigh)
+# summary(modelo_c)
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Hogares con Jefa de Familia, 20-30 años, CDMX
+
+> Estime la misma relación para hogares con jefe de familia femenino, de entre
+> 20 y 30 años de edad, en la Ciudad de México.
+
+```{r ex4d}
+# Filtre el subconjunto correspondiente
+# modelo_d <- lm(gasto ~ ingreso, data = submuestra_d)
+# summary(modelo_d)
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Hogares del Ámbito Urbano
+
+> Estime la misma relación para hogares del ámbito urbano.
+
+```{r ex4e}
+# modelo_e <- lm(gasto ~ ingreso, data = submuestra_urbano)
+# summary(modelo_e)
+```
+
+*Interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Interpretación a la Luz de la HIP
+
+> Interprete sus resultados a la luz de la Hipótesis de Ingreso Permanente y
+> comparados con los resultados para las variables agregadas.
+
+*Conclusión:*
+
+---
+
+# Ejercicio 5: Comportamiento Reciente del Consumo en México
+
+> **Instrucciones:** Describa el comportamiento reciente del consumo en México
+> y sus determinantes.
+> *(Sin horas asignadas explícitamente)*
+
+## Inciso (a): Datos de Consumo Agregado y Componentes
+
+> Obtenga datos trimestrales de México para $C$, el consumo de bienes importados
+> y el consumo de bienes nacionales.
+
+```{r ex5a}
+# Cargue datos del INEGI
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Tipo de Cambio y Tasa de Interés Real
+
+> Obtenga datos para el tipo de cambio y la tasa de interés real del Banco de México.
+
+```{r ex5b}
+# Cargue datos del Banco de México
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Gráficas de Series de Tiempo
+
+> Grafique las series de tiempo juntas para compararlas visualmente.
+
+```{r ex5c}
+# Gráficas
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Series Filtradas (Tasa de Cambio Anual)
+
+> Filtre todas las series obteniendo su tasa de cambio anual. Grafique las series
+> filtradas y obtenga la matriz de varianzas y covarianzas.
+
+```{r ex5d}
+# Tasas de cambio anual
+# Gráfica
+# Matriz de varianzas-covarianzas
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Conclusión sobre Tipo de Cambio y Tasa de Interés
+
+> Redacte una conclusión sobre el impacto de la tasa de interés y el tipo de
+> cambio sobre el consumo.
+
+*Conclusión:*
+
+---
+
+# Ejercicio 6: Riqueza Neta de los Hogares (ENFIH-2019)
+
+> **Instrucciones:** Estudie el nivel de riqueza neta de los hogares según la
+> encuesta ENFIH-2019 del INEGI.
+> *(1 hora, 0.5 puntos cada inciso)*
+
+```{r ex6-setup}
+# Cargue los microdatos de la ENFIH-2019
+# enfih <- read.csv("enfih2019.csv")
+```
+
+## Inciso (a): Microdatos de la ENFIH
+
+> Obtenga los microdatos de la ENFIH.
+
+*Descripción del proceso de obtención de los datos:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Riqueza Neta por Tamaño de Localidad
+
+> Tabule el nivel de riqueza neta de los hogares de acuerdo al tamaño de la
+> localidad en la que radican.
+
+```{r ex6b}
+# Tabulado usando el código provisto por el INEGI
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Dispersión: Ingreso Corriente vs. Riqueza Neta
+
+> Haga una gráfica de dispersión de la relación entre el ingreso corriente
+> efectivo y la riqueza neta (puede usarse una muestra de hogares).
+
+```{r ex6c}
+# Gráfica de dispersión
+```
+
+*Descripción:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Forma de Atender Gastos Imprevistos
+
+> Tabulado de las respuestas sobre cómo atienden gastos imprevistos, por tamaño
+> de localidad.
+
+```{r ex6d}
+# Tabulado
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Interpretación
+
+> Interprete la gráfica y el tabulado.
+
+*Conclusión:*
+
+---
+
+# Ejercicio 7: Acertijo del Premio al Riesgo
+
+> **Instrucciones:** Estudie el acertijo del premio al riesgo para México y
+> EE.UU.
+> *(3 horas, 0.5 puntos cada inciso)*
+
+```{r ex7-setup}
+# Cargue los datos del IPC, NASDAQ y el índice de acciones del país asignado
+# Eq 1: Japón | Eq 2: Suecia | Eq 3: España | Eq 4: Brasil | Eq 5: Canadá
+```
+
+## Inciso (a): Índices de Precios de Acciones (desde 1990)
+
+> Consiga los valores anuales del IPC (BMV), el NASDAQ y otro índice asignado.
+
+```{r ex7a}
+# Cargue los índices bursátiles
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (b): Tasa de Retorno Nominal
+
+> Calcule la tasa de retorno nominal anual para cada índice.
+
+```{r ex7b}
+# r_t = (P_t - P_{t-1}) / P_{t-1}
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (c): Tasa de Interés a un Año
+
+> Consiga los valores promedio anual de la tasa de interés a un año para los
+> tres países.
+
+```{r ex7c}
+# Cargue tasas de interés
+```
+
+*Fuentes:*
+
+<!-- ============================================================ -->
+
+## Inciso (d): Prima de Riesgo Accionaria
+
+> Calcule la diferencia entre el retorno del mercado de valores y el retorno de
+> invertir a la tasa a un año.
+
+```{r ex7d}
+# prima = retorno_mercado - tasa_libre_riesgo
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (e): Covarianza con Crecimiento del Consumo Agregado
+
+> Calcule la covarianza entre la prima de riesgo y la tasa de crecimiento real
+> del consumo agregado de cada economía.
+
+```{r ex7e}
+# cov(prima, Delta_C_agregado)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (f): Covarianza con Consumo de Bienes Durables y Servicios
+
+> Calcule la covarianza entre la prima de riesgo y la tasa de crecimiento real
+> del consumo de bienes durables y de servicios.
+
+```{r ex7f}
+# cov(prima, Delta_C_durables)
+# cov(prima, Delta_C_servicios)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (g): Aversión Relativa al Riesgo (CRRA)
+
+> Calcule el valor de aversión relativa al riesgo implícito, dado el supuesto de
+> utilidad CRRA:
+> $$\gamma = \frac{E[r_m - r_f]}{\text{Cov}(r_m - r_f,\; \Delta c)}$$
+
+```{r ex7g}
+# gamma = E[prima] / cov(prima, Delta_c)
+```
+
+*Resultados e interpretación:*
+
+<!-- ============================================================ -->
+
+## Inciso (h): Covarianza con Consumo de Bienes Importados (México)
+
+> Para el caso de México, calcule la covarianza entre la prima de riesgo y la
+> tasa de crecimiento real del consumo de bienes importados.
+> (Serie: <https://www.inegi.org.mx/temas/imcp/>)
+
+```{r ex7h}
+# cov(prima_mex, Delta_C_importados)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (i): Aversión al Riesgo con Consumo Importado
+
+> Calcule el valor de aversión relativa al riesgo con la covarianza del inciso (h).
+
+```{r ex7i}
+# gamma_importados = E[prima_mex] / cov(prima_mex, Delta_C_importados)
+```
+
+*Resultados:*
+
+<!-- ============================================================ -->
+
+## Inciso (j): Interpretación General
+
+*Conclusión sobre el acertijo del premio al riesgo para México y EE.UU.:*
+
+---
+
+# Ejercicio 8: Valuación de Opciones — Árbol Binomial
+
+> **Instrucciones:** Use el método del árbol binomial en **dos etapas** para
+> explicar el precio $P = 200$ de un activo y valuar un *call* sobre dicho
+> activo con precio de ejercicio $K = P - N \times 5$, donde $N$ es el número
+> de equipo, asumiendo una tasa de interés del 5%.
+> *(1 hora, 2 puntos)*
+
+```{r ex8-params}
+P   <- 200     # Precio actual del activo
+N   <- 1       # Número de equipo — ajuste según corresponda
+K   <- P - N * 5  # Precio de ejercicio del call
+r   <- 0.05    # Tasa de interés
+```
+
+## Árbol Binomial: Precio del Activo
+
+> Construya y explique el árbol binomial de dos etapas para el activo.
+
+```{r ex8-arbol}
+# Defina los factores u (subida) y d (bajada)
+# u <- ...
+# d <- ...
+# dt <- ...  # longitud de cada período
+
+# Construya el árbol de precios
+# Etapa 0: S_0 = P
+# Etapa 1: S_u = P*u, S_d = P*d
+# Etapa 2: S_uu = P*u^2, S_ud = P*u*d, S_dd = P*d^2
+
+# Calcule las probabilidades neutrales al riesgo
+# p <- (exp(r*dt) - d) / (u - d)
+```
+
+*Descripción del árbol y calibración de parámetros:*
+
+$$
+% Árbol binomial — inserte diagrama en LaTeX si lo desea
+$$
+
+<!-- ============================================================ -->
+
+## Valuación del Call Europeo
+
+> Calcule el precio del *call* con precio de ejercicio $K = `r K`$.
+
+```{r ex8-call}
+# Payoffs en la etapa final
+# C_uu <- max(S_uu - K, 0)
+# C_ud <- max(S_ud - K, 0)
+# C_dd <- max(S_dd - K, 0)
+
+# Retroceso (backward induction)
+# C_u  <- exp(-r*dt) * (p * C_uu + (1-p) * C_ud)
+# C_d  <- exp(-r*dt) * (p * C_ud + (1-p) * C_dd)
+# C_0  <- exp(-r*dt) * (p * C_u  + (1-p) * C_d)
+# cat("Precio del call:", C_0)
+```
+
+*Interpretación del resultado:*
+
+---
+
+*Fin de la Tarea 2*

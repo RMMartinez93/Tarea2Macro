@@ -1,0 +1,87 @@
+---
+title: "Ejercicio 8 de la Tarea 2"
+author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel Martínez
+  Olivera
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos  = "H"
+)
+
+# Common libraries — add more as needed
+library(tidyverse)
+library(ggplot2)
+```
+
+# Ejercicio 8: Valuación de Opciones — Árbol Binomial
+
+> **Instrucciones:** Use el método del árbol binomial en **dos etapas** para
+> explicar el precio $P = 200$ de un activo y valuar un *call* sobre dicho
+> activo con precio de ejercicio $K = P - N \times 5$, donde $N$ es el número
+> de equipo, asumiendo una tasa de interés del 5%.
+> *(1 hora, 2 puntos)*
+
+```{r ex8-params}
+P   <- 200     # Precio actual del activo
+N   <- 1       # Número de equipo — ajuste según corresponda
+K   <- P - N * 5  # Precio de ejercicio del call
+r   <- 0.05    # Tasa de interés
+```
+
+## Árbol Binomial: Precio del Activo
+
+> Construya y explique el árbol binomial de dos etapas para el activo.
+
+```{r ex8-arbol}
+# Defina los factores u (subida) y d (bajada)
+# u <- ...
+# d <- ...
+# dt <- ...  # longitud de cada período
+
+# Construya el árbol de precios
+# Etapa 0: S_0 = P
+# Etapa 1: S_u = P*u, S_d = P*d
+# Etapa 2: S_uu = P*u^2, S_ud = P*u*d, S_dd = P*d^2
+
+# Calcule las probabilidades neutrales al riesgo
+# p <- (exp(r*dt) - d) / (u - d)
+```
+
+*Descripción del árbol y calibración de parámetros:*
+
+$$
+% Árbol binomial — inserte diagrama en LaTeX si lo desea
+$$
+
+<!-- ============================================================ -->
+
+## Valuación del Call Europeo
+
+> Calcule el precio del *call* con precio de ejercicio $K = `r K`$.
+
+```{r ex8-call}
+# Payoffs en la etapa final
+# C_uu <- max(S_uu - K, 0)
+# C_ud <- max(S_ud - K, 0)
+# C_dd <- max(S_dd - K, 0)
+
+# Retroceso (backward induction)
+# C_u  <- exp(-r*dt) * (p * C_uu + (1-p) * C_ud)
+# C_d  <- exp(-r*dt) * (p * C_ud + (1-p) * C_dd)
+# C_0  <- exp(-r*dt) * (p * C_u  + (1-p) * C_d)
+# cat("Precio del call:", C_0)
+```
+
+*Interpretación del resultado:*
+
+---
+
+*Fin de la Tarea 2*
+
