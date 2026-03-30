@@ -42,7 +42,6 @@ ingresos <- read.csv("ingresos.csv")
 > Baje los datos del año asignado al grupo de la ENIGH (INEGI).
 
 *Descripción del proceso de descarga y las variables seleccionadas:*
-*Descripción del proceso de descarga y las variables seleccionadas:*
 
 Los datos utilizados en este ejercicio provienen de la Encuesta Nacional de Ingresos y Gastos de los Hogares (ENIGH), elaborada por el Instituto Nacional de Estadística y Geografía (INEGI). La base de datos fue descargada directamente del sitio oficial del INEGI, correspondiente al año asignado al grupo.
 
