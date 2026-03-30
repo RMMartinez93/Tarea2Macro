@@ -4,15 +4,17 @@ author: Lorna Leticia Chong Moreno, Luis Felipe Castillo Garrido, Rodrigo Manuel
   Olivera
 date: "`r Sys.Date()`"
 output: pdf_document
+header-includes:
+  - \usepackage{float}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo    = TRUE,
+  echo    = FALSE,
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
-  fig.pos  = "H"
+  fig.pos  = "htbp"
 )
 
 # Common libraries — add more as needed
@@ -27,9 +29,12 @@ library(ggplot2)
 > *(1 hora, 0.5 puntos cada inciso)*
 
 ```{r ex4-setup}
-# Cargue los microdatos de la ENIGH correspondientes a su año asignado
-# Grupo 1: 2024 | Grupo 2: 2022 | Grupo 3: 2020 | etc.
-# enigh <- read.csv("enigh_XXXX.csv")
+hogares <- read.csv("hogares.csv")
+gastos <- read.csv("gastoshogar.csv")
+poblacion <- read.csv("poblacion.csv")
+ingresos <- read.csv("ingresos.csv")
+
+
 ```
 
 ## Inciso (a): Descarga de la ENIGH
@@ -37,8 +42,16 @@ library(ggplot2)
 > Baje los datos del año asignado al grupo de la ENIGH (INEGI).
 
 *Descripción del proceso de descarga y las variables seleccionadas:*
+*Descripción del proceso de descarga y las variables seleccionadas:*
 
-<!-- ============================================================ -->
+Los datos utilizados en este ejercicio provienen de la Encuesta Nacional de Ingresos y Gastos de los Hogares (ENIGH), elaborada por el Instituto Nacional de Estadística y Geografía (INEGI). La base de datos fue descargada directamente del sitio oficial del INEGI, correspondiente al año asignado al grupo.
+
+Para el análisis, se emplearon las bases de datos a nivel hogar e individuo, incluyendo específicamente los archivos de hogares, gastos, ingresos y población. Estas bases contienen información detallada sobre las características sociodemográficas de los hogares, así como sobre sus fuentes de ingreso y patrones de gasto.
+
+Las variables seleccionadas incluyen identificadores del hogar (como folioviv y foliohog), el ingreso corriente total (ing_tri), el gasto total del hogar (gasto_tri), así como variables demográficas relevantes como sexo, edad y entidad federativa. Asimismo, se utilizó el factor de expansión proporcionado por la encuesta, el cual permite obtener estimaciones representativas a nivel nacional.
+
+La integración de las distintas bases se realizó mediante los identificadores comunes del hogar, lo que permitió construir una base unificada para el análisis econométrico de la relación entre ingreso y gasto.
+
 
 ## Inciso (b): Hogares, Ingreso y Gasto Promedio
 
@@ -46,13 +59,62 @@ library(ggplot2)
 > utilice los factores de expansión para calcular el ingreso y gasto promedio de
 > todos los hogares mexicanos.
 
-```{r ex4b}
-# Número de hogares
-# Ingreso y gasto promedio sin factor de expansión
-# Ingreso y gasto promedio con factor de expansión
-```
+```{r ex4b, include=FALSE}
+# ================================
+# 1. Gasto por hogar
+# ================================
 
+gasto_hogar <- gastos %>%
+  group_by(folioviv, foliohog) %>%
+  summarise(gasto = sum(gasto_tri, na.rm = TRUE))
+
+# ================================
+# 2. Ingreso por hogar
+# ================================
+
+ingreso_hogar <- ingresos %>%
+  group_by(folioviv, foliohog) %>%
+  summarise(ingreso = sum(ing_tri, na.rm = TRUE))
+
+# ================================
+# 3. Unir todo
+# ================================
+
+base <- hogares %>%
+  left_join(gasto_hogar, by = c("folioviv", "foliohog")) %>%
+  left_join(ingreso_hogar, by = c("folioviv", "foliohog"))
+
+# ================================
+# 4. Número de hogares
+# ================================
+
+n_hogares <- nrow(base)
+
+# ================================
+# 5. Promedios SIN expansión
+# ================================
+
+ingreso_prom <- mean(base$ingreso, na.rm = TRUE)
+gasto_prom <- mean(base$gasto, na.rm = TRUE)
+
+# ================================
+# 6. Promedios CON expansión
+# ================================
+
+ingreso_prom_exp <- weighted.mean(base$ingreso, w = base$factor, na.rm = TRUE)
+gasto_prom_exp <- weighted.mean(base$gasto, w = base$factor, na.rm = TRUE)
+
+```
 *Resultados:*
+
+El número de hogares entrevistados es `r n_hogares`.  
+
+El ingreso promedio sin factor de expansión es `r format(round(ingreso_prom,0), big.mark=",")` pesos, mientras que el gasto promedio es `r format(round(gasto_prom,0), big.mark=",")` pesos.  
+
+Al utilizar los factores de expansión, el ingreso promedio aumenta a `r format(round(ingreso_prom_exp,0), big.mark=",")` pesos y el gasto promedio a `r format(round(gasto_prom_exp,0), big.mark=",")` pesos.  
+
+Se observa que el ingreso promedio es mayor al gasto promedio, lo cual es consistente con la teoría económica.
+
 
 <!-- ============================================================ -->
 
@@ -60,13 +122,45 @@ library(ggplot2)
 
 > Estime una relación entre ingreso y gasto de las familias entrevistadas.
 
-```{r ex4c}
-# modelo_c <- lm(gasto ~ ingreso, data = enigh)
-# summary(modelo_c)
+```{r ex4c, include=FALSE}
+
+# Modelo de regresión ingreso → gasto
+modelo_c <- lm(gasto ~ ingreso, data = base)
+
+# Guardar resultados importantes
+beta0 <- coef(modelo_c)[1]
+beta1 <- coef(modelo_c)[2]
+r2 <- summary(modelo_c)$r.squared
 ```
+
+```{r grafica_c, echo=FALSE, fig.cap=" Relación ingreso-gasto en la muestra completa de hogares.", fig.pos="H"}
+ggplot(base, aes(x = ingreso, y = gasto)) +
+  geom_point(alpha = 0.2, color = "black") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Relación entre ingreso y gasto",
+    x = "Ingreso",
+    y = "Gasto"
+  ) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    text = element_text(size = 11)
+  )
+```
+
 
 *Interpretación:*
 
+Se estimó un modelo de regresión lineal simple mediante el método de Mínimos Cuadrados Ordinarios (MCO), donde el gasto del hogar se especifica como una función lineal del ingreso. Este enfoque permite cuantificar la relación promedio entre ambas variables utilizando la información de la muestra completa de hogares.
+
+El coeficiente del ingreso es 0.2001, lo que indica que por cada peso adicional de ingreso, el gasto aumenta en aproximadamente 0.2001 pesos. Este resultado sugiere que los hogares destinan únicamente una fracción de su ingreso adicional al consumo, lo cual es consistente con la existencia de ahorro.
+
+El coeficiente de determinación (R²) es 0.249, lo que implica que el ingreso explica cerca del 24.9% de la variación observada en el gasto de los hogares. Esto sugiere que, aunque el ingreso es un determinante importante del consumo, existen otros factores relevantes —como preferencias, composición del hogar o acceso al crédito— que también influyen en el nivel de gasto.
+
+En conjunto, los resultados muestran una relación positiva entre ingreso y gasto, consistente con la teoría económica del consumo, en la cual los hogares incrementan su consumo a medida que aumenta su ingreso, pero no en la misma proporción, si no en una proporción menor a 1. La concentración de observaciones en niveles bajos de ingreso se debe a la presencia de valores extremos en la distribución, lo cual genera una compresión visual de la mayoría de los datos.
 <!-- ============================================================ -->
 
 ## Inciso (d): Hogares con Jefa de Familia, 20-30 años, CDMX
@@ -74,13 +168,67 @@ library(ggplot2)
 > Estime la misma relación para hogares con jefe de familia femenino, de entre
 > 20 y 30 años de edad, en la Ciudad de México.
 
-```{r ex4d}
-# Filtre el subconjunto correspondiente
-# modelo_d <- lm(gasto ~ ingreso, data = submuestra_d)
-# summary(modelo_d)
+```{r ex4d, echo=FALSE}
+
+# ================================
+# Identificar jefe de hogar
+# ================================
+
+jefes <- poblacion %>%
+  filter(parentesco == 101) %>%
+  select(folioviv, foliohog, sexo, edad, entidad) %>%
+  rename(entidad_pob = entidad)
+
+# ================================
+# Filtrar: mujer, 20-30 años, CDMX
+# ================================
+
+submuestra_d <- base %>%
+  left_join(jefes, by = c("folioviv", "foliohog")) %>%
+  filter(
+    sexo == 2,        # femenino
+    edad >= 20 & edad <= 30,
+    entidad == 9      # CDMX
+  )
+
+# ================================
+# Regresión
+# ================================
+
+modelo_d <- lm(gasto ~ ingreso, data = submuestra_d)
+
+# Guardar resultados
+beta1_d <- coef(modelo_d)[2]
+r2_d <- summary(modelo_d)$r.squared
+```
+
+
+```{r grafica_d, echo=FALSE, fig.cap=" Relación ingreso-gasto en hogares con jefatura femenina (20–30 años, CDMX)."}
+ggplot(submuestra_d, aes(x = ingreso, y = gasto)) +
+  geom_point(alpha = 0.2, color = "black") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Relación entre ingreso y gasto",
+    x = "Ingreso",
+    y = "Gasto"
+  ) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    text = element_text(size = 11)
+  )
 ```
 
 *Interpretación:*
+Se estimó un modelo de regresión lineal simple mediante el método de Mínimos Cuadrados Ordinarios (MCO) para el subconjunto de hogares cuyo jefe es mujer, tiene entre 20 y 30 años de edad y reside en la Ciudad de México.
+
+El coeficiente del ingreso es 0.6312, lo que indica que, dentro de este grupo, por cada peso adicional de ingreso, el gasto aumenta en aproximadamente 0.63 pesos. Este valor es considerablemente mayor al obtenido en la muestra completa, lo que sugiere una mayor sensibilidad del consumo al ingreso en este tipo de hogares.
+
+El coeficiente de determinación (R²) es 0.642, lo que implica que el ingreso explica una proporción importante de la variación en el gasto dentro de esta submuestra. Esto indica que el ingreso es un determinante clave del consumo para estos hogares.
+
+En conjunto, los resultados sugieren que los hogares jóvenes con jefatura femenina en la Ciudad de México presentan un comportamiento de consumo más dependiente del ingreso, posiblemente debido a menores niveles de ahorro o mayores restricciones presupuestarias.
 
 <!-- ============================================================ -->
 
@@ -88,13 +236,53 @@ library(ggplot2)
 
 > Estime la misma relación para hogares del ámbito urbano.
 
-```{r ex4e}
-# modelo_e <- lm(gasto ~ ingreso, data = submuestra_urbano)
-# summary(modelo_e)
-```
+```{r ex4e, include=FALSE}
+# ================================
+# Filtrar hogares urbanos
+# ================================
 
+submuestra_urbano <- base %>%
+  filter(est_dis == 1)
+
+# ================================
+# Regresión
+# ================================
+
+modelo_e <- lm(gasto ~ ingreso, data = submuestra_urbano)
+
+# Guardar resultados
+beta1_e <- coef(modelo_e)[2]
+r2_e <- summary(modelo_e)$r.squared
+```
+```{r grafica_e, echo=FALSE, fig.cap="Relación ingreso-gasto en hogares del ámbito urbano."}
+ggplot(submuestra_urbano, aes(x = ingreso, y = gasto)) +
+  geom_point(alpha = 0.2, color = "black") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Relación entre ingreso y gasto (urbano)",
+    x = "Ingreso",
+    y = "Gasto"
+  ) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    text = element_text(size = 11)
+  )
+```
 *Interpretación:*
 
+
+Se estimó un modelo de regresión lineal simple mediante el método de Mínimos Cuadrados Ordinarios (MCO) para el subconjunto de hogares ubicados en el ámbito urbano.
+
+El coeficiente del ingreso es `r round(beta1_e,4)`, lo que indica que, en zonas urbanas, por cada peso adicional de ingreso, el gasto aumenta en aproximadamente `r round(beta1_e,4)` pesos.
+
+El coeficiente de determinación (R²) es `r round(r2_e,3)`, lo que sugiere que el ingreso explica una parte importante de la variación en el gasto dentro de estos hogares.
+
+En comparación con la muestra completa, los resultados reflejan que el ingreso sigue siendo un determinante fundamental del consumo en zonas urbanas, aunque el comportamiento puede diferir debido a factores como mayor acceso a bienes y servicios, costos de vida más elevados y distintas oportunidades laborales.
+
+En conjunto, se observa una relación positiva entre ingreso y gasto, consistente con la teoría económica del consumo.
 <!-- ============================================================ -->
 
 ## Inciso (f): Interpretación a la Luz de la HIP
@@ -104,4 +292,12 @@ library(ggplot2)
 
 *Conclusión:*
 
----
+Los resultados obtenidos son consistentes con la Hipótesis de Ingreso Permanente (HIP), la cual establece que los hogares basan sus decisiones de consumo no únicamente en su ingreso corriente, sino en una estimación de su ingreso permanente a lo largo del tiempo.
+
+En la muestra completa, el coeficiente del ingreso es menor a uno, lo que indica que ante aumentos en el ingreso, el gasto también aumenta pero en una proporción menor. Esto sugiere que los hogares no destinan todo su ingreso adicional al consumo, sino que una parte se ahorra, lo cual es coherente con la HIP.
+
+Al analizar submuestras específicas, como los hogares con jefatura femenina joven en la Ciudad de México, se observa un coeficiente del ingreso considerablemente mayor. Esto puede interpretarse como una mayor propensión marginal a consumir, lo que sugiere que estos hogares enfrentan mayores restricciones presupuestarias o menor capacidad de ahorro, por lo que su consumo depende más directamente del ingreso corriente.
+
+Por otro lado, en el caso de los hogares urbanos, la relación entre ingreso y gasto sigue siendo positiva, pero puede reflejar un comportamiento intermedio, donde el consumo está influenciado tanto por el ingreso corriente como por expectativas de ingreso futuro, así como por el acceso a crédito y a una mayor variedad de bienes y servicios.En comparación con las variables agregadas, los resultados muestran que, aunque el ingreso es un determinante fundamental del consumo, su efecto varía entre distintos tipos de hogares. El consumo no responde de manera uniforme al ingreso corriente, sino que depende de las condiciones específicas de cada hogar y de su capacidad para suavizar el consumo a lo largo del tiempo.
+
+
