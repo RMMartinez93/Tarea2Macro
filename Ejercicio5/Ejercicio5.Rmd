@@ -8,7 +8,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo    = TRUE,
+  echo    = FALSE,   # 🔥 CAMBIA ESTO
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
@@ -16,8 +16,10 @@ knitr::opts_chunk$set(
 )
 
 # Common libraries — add more as needed
+library(readxl)
 library(tidyverse)
-library(ggplot2)
+
+
 ```
 
 # Ejercicio 5: Comportamiento Reciente del Consumo en México
@@ -32,10 +34,27 @@ library(ggplot2)
 > y el consumo de bienes nacionales.
 
 ```{r ex5a}
-# Cargue datos del INEGI
+library(readxl)
+library(tidyverse)
+library(zoo)
+
+consumo <- read_excel("OUT_24.xlsx", sheet = "Hoja1")
+
+consumo_limpio <- consumo %>%
+  pivot_longer(-Concepto, names_to = "Periodo", values_to = "Valor") %>%
+  pivot_wider(names_from = Concepto, values_from = Valor) %>%
+  mutate(fecha = as.yearqtr(Periodo, format = "%Y T%q"))
+
 ```
 
-*Fuentes:*
+Para el análisis del consumo en México, se utilizaron datos trimestrales del Sistema de Cuentas Nacionales publicados por el Instituto Nacional de Estadística y Geografía (INEGI). En particular, se consideraron tres variables: el consumo privado total (C), el consumo de bienes nacionales y el consumo de bienes importados.
+
+Los datos fueron organizados en frecuencia trimestral y transformados a un formato adecuado para su análisis, de manera que cada observación corresponde a un trimestre específico identificado por su periodo temporal. Asimismo, se realizó un proceso de limpieza de los datos, eliminando información irrelevante y conservando únicamente las series necesarias para el estudio.
+
+El consumo privado total representa el gasto agregado de los hogares en bienes y servicios, mientras que el consumo de bienes nacionales refleja el componente del gasto destinado a la producción interna. Por su parte, el consumo de bienes importados captura el gasto en bienes provenientes del exterior, lo cual permite analizar la relación entre la demanda interna y el sector externo.
+
+Estas tres series constituyen la base del análisis, ya que permiten descomponer el consumo total en sus principales componentes y evaluar su comportamiento a lo largo del tiempo.
+Fuente: Instituto Nacional de Estadística y Geografía (INEGI). Sistema de Cuentas Nacionales de México, Oferta y Utilización Trimestral.
 
 <!-- ============================================================ -->
 
@@ -44,10 +63,69 @@ library(ggplot2)
 > Obtenga datos para el tipo de cambio y la tasa de interés real del Banco de México.
 
 ```{r ex5b}
-# Cargue datos del Banco de México
+
+# =========================
+# INCISO (b): Tipo de cambio y tasa de interés
+# =========================
+# =========================
+# INCISO (b): Tipo de cambio y tasa de interés
+# =========================
+
+library(dplyr)
+library(zoo)
+
+# =========================
+# LEER CSV LIMPIO
+# =========================
+
+tc <- read.csv("Tipo de Cambio.csv")
+tasa <- read.csv("Tasa de interes.csv")
+
+# =========================
+# RENOMBRAR COLUMNAS
+# =========================
+
+names(tc) <- c("fecha", "valor")
+names(tasa) <- c("fecha", "valor")
+
+# =========================
+# FORMATO DE DATOS
+# =========================
+
+tc$fecha <- as.Date(tc$fecha, format = "%d/%m/%Y")
+tasa$fecha <- as.Date(tasa$fecha, format = "%d/%m/%Y")
+
+tc$valor <- as.numeric(tc$valor)
+tasa$valor <- as.numeric(tasa$valor)
+
+# =========================
+# CONVERTIR A TRIMESTRAL
+# =========================
+
+tc_trim <- tc %>%
+  mutate(trimestre = as.yearqtr(fecha)) %>%
+  group_by(trimestre) %>%
+  summarise(tc = mean(valor, na.rm = TRUE))
+
+tasa_trim <- tasa %>%
+  mutate(trimestre = as.yearqtr(fecha)) %>%
+  group_by(trimestre) %>%
+  summarise(tasa = mean(valor, na.rm = TRUE))
+
+# =========================
+# VER RESULTADOS
+# =========================
+
 ```
 
-*Fuentes:*
+Para complementar el análisis del consumo, se incorporaron datos del tipo de cambio y de la tasa de interés real de México, obtenidos del Banco de México. Ambas series fueron recolectadas en frecuencia diaria y posteriormente transformadas a frecuencia trimestral mediante el cálculo de promedios, con el fin de hacerlas comparables con las series de consumo.
+
+El tipo de cambio refleja el valor del peso frente al dólar estadounidense y es relevante para analizar el costo relativo de los bienes importados, mientras que la tasa de interés real representa el costo del financiamiento en términos reales y está estrechamente relacionada con las decisiones de consumo e inversión de los hogares.
+
+Estas variables permiten evaluar el entorno macroeconómico en el que se determina el consumo,
+
+Fuente: Banco de México. Sistema de Información Económica (SIE).
+
 
 <!-- ============================================================ -->
 
@@ -56,10 +134,123 @@ library(ggplot2)
 > Grafique las series de tiempo juntas para compararlas visualmente.
 
 ```{r ex5c}
-# Gráficas
+# =========================
+# INCISO (c): Gráficas (APA 6 limpio y legible)
+# =========================
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(zoo)
+library(scales)
+
+# =========================
+# UNIR TODAS LAS SERIES
+# =========================
+
+data_final <- consumo_limpio %>%
+  rename(trimestre = fecha) %>%
+  left_join(tc_trim, by = "trimestre") %>%
+  left_join(tasa_trim, by = "trimestre")
+
+# =========================
+# FORMATO LARGO + ETIQUETAS
+# =========================
+
+data_long <- data_final %>%
+  select(trimestre, CP, CI, CM, tc, tasa) %>%
+  pivot_longer(
+    cols = -trimestre,
+    names_to = "variable",
+    values_to = "valor"
+  ) %>%
+  mutate(variable = recode(variable,
+    "CP" = "Consumo Privado",
+    "CI" = "Consumo Bienes Nacionales",
+    "CM" = "Consumo Bienes Importados",
+    "tc" = "Tipo de Cambio",
+    "tasa" = "Tasa de Interés"
+  ))
+
+# =========================
+# GRÁFICA MEJORADA
+# =========================
+
+ggplot(data_long, aes(x = trimestre, y = valor)) +
+  geom_line(color = "black", size = 0.7) +
+  
+  facet_wrap(~variable, scales = "free_y", ncol = 2) +
+  
+  scale_y_continuous(labels = comma) +  # quita notación científica
+  
+  scale_x_yearqtr(
+    format = "%Y",
+    n = 6   # menos etiquetas → no se amontonan
+  ) +
+  
+  labs(
+    title = "Figura 1",
+    subtitle = "Series de tiempo: Consumo, Tipo de Cambio y Tasa de Interés en México",
+    x = "Tiempo (Trimestres)",
+    y = "Valor"
+  ) +
+  
+  theme_classic(base_size = 11) +
+  
+  theme(
+    plot.title = element_text(hjust = 0, face = "bold"),
+    plot.subtitle = element_text(hjust = 0),
+    
+    strip.text = element_text(face = "bold", size = 10),
+    
+    axis.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 0),
+    
+    legend.position = "none",
+    
+    panel.spacing = unit(1.2, "lines")  # más espacio entre gráficas
+  )
+# =========================
+# GRÁFICA ADICIONAL: MISMA ESCALA (APA 6)
+# =========================
+
+ggplot(data_long, aes(x = trimestre, y = valor, linetype = variable)) +
+  geom_line(color = "black", size = 0.7) +
+  
+  scale_y_continuous(labels = comma) +
+  
+  scale_x_yearqtr(
+    format = "%Y",
+    n = 6
+  ) +
+  
+  labs(
+    title = "Figura 2",
+    subtitle = "Comparación conjunta de las series (misma escala)",
+    x = "Tiempo (Trimestres)",
+    y = "Valor",
+    linetype = "Serie"
+  ) +
+  
+  theme_classic(base_size = 11) +
+  
+  theme(
+    plot.title = element_text(hjust = 0, face = "bold"),
+    plot.subtitle = element_text(hjust = 0),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
 ```
 
 *Descripción:*
+La Figura 1 presenta las series de tiempo del consumo privado, el consumo de bienes nacionales, el consumo de bienes importados, el tipo de cambio y la tasa de interés en México. En primer lugar, se observa que tanto el consumo privado como el consumo de bienes nacionales muestran una tendencia claramente creciente a lo largo del periodo analizado, lo cual es consistente con el crecimiento económico y el aumento del ingreso agregado en el país. No obstante, ambas series presentan una caída pronunciada alrededor de 2020, lo cual puede asociarse a los efectos económicos derivados de la pandemia de COVID-19, seguida de una recuperación relativamente rápida en los periodos posteriores.
+
+Por su parte, el consumo de bienes importados presenta un comportamiento más volátil y con valores negativos en varios periodos, lo que refleja la naturaleza de las importaciones netas y su sensibilidad a factores externos como el tipo de cambio y la demanda interna. A diferencia del consumo total, esta serie no muestra una tendencia clara de crecimiento sostenido, sino fluctuaciones más marcadas a lo largo del tiempo.
+
+En cuanto al tipo de cambio, se observa una tendencia general al alza, lo que indica una depreciación del peso frente al dólar en el largo plazo. Este comportamiento también presenta episodios de volatilidad, particularmente en periodos de incertidumbre económica global. Por otro lado, la tasa de interés muestra variaciones cíclicas, con periodos de disminución seguidos por incrementos, reflejando la política monetaria implementada por el banco central en respuesta a las condiciones macroeconómicas.
+
+Finalmente, al comparar visualmente las series, se aprecia que, aunque están relacionadas, difieren considerablemente en magnitud y volatilidad. El consumo presenta una trayectoria más estable y creciente, mientras que el tipo de cambio y la tasa de interés exhiben mayor variabilidad. Esto sugiere que, si bien estas variables financieras pueden influir en el consumo, su impacto no es inmediato ni proporcional en términos de nivel, sino que se manifiesta de manera más compleja a lo largo del tiempo.
+
 
 <!-- ============================================================ -->
 
@@ -69,12 +260,136 @@ library(ggplot2)
 > filtradas y obtenga la matriz de varianzas y covarianzas.
 
 ```{r ex5d}
-# Tasas de cambio anual
-# Gráfica
-# Matriz de varianzas-covarianzas
+# =========================
+# INCISO (d): Tasas de crecimiento anual
+# =========================
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(zoo)
+library(scales)
+library(knitr)
+
+# =========================
+# CRECIMIENTO ANUAL
+# =========================
+
+data_growth <- data_final %>%
+  arrange(trimestre) %>%
+  mutate(across(
+    c(CP, CI, CM, tc, tasa),
+    ~ (. / lag(., 4) - 1)
+  ))
+
+# =========================
+# FORMATO LARGO + ETIQUETAS
+# =========================
+
+data_growth_long <- data_growth %>%
+  select(trimestre, CP, CI, CM, tc, tasa) %>%
+  pivot_longer(
+    cols = -trimestre,
+    names_to = "variable",
+    values_to = "valor"
+  ) %>%
+  mutate(variable = recode(variable,
+    "CP" = "Consumo Privado",
+    "CI" = "Consumo Bienes Nacionales",
+    "CM" = "Consumo Bienes Importados",
+    "tc" = "Tipo de Cambio",
+    "tasa" = "Tasa de Interés"
+  ))
+
+# =========================
+# GRÁFICA PRINCIPAL (APA 6)
+# =========================
+
+ggplot(data_growth_long, aes(x = trimestre, y = valor)) +
+  geom_line(color = "black", size = 0.7) +
+  
+  facet_wrap(~variable, scales = "free_y", ncol = 2) +
+  
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_x_yearqtr(format = "%Y", n = 6) +
+  
+  labs(
+    title = "Figura 4",
+    subtitle = "Tasas de crecimiento anual de las series",
+    x = "Tiempo (Trimestres)",
+    y = "Tasa de crecimiento anual"
+  ) +
+  
+  theme_classic(base_size = 11) +
+  theme(
+    plot.title = element_text(hjust = 0, face = "bold"),
+    plot.subtitle = element_text(hjust = 0),
+    strip.text = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "none"
+  )
+
+# =========================
+# GRÁFICA ADICIONAL (MISMA ESCALA)
+# =========================
+
+ggplot(data_growth_long, aes(x = trimestre, y = valor, linetype = variable)) +
+  geom_line(color = "black", size = 0.7) +
+  
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_x_yearqtr(format = "%Y", n = 6) +
+  
+  labs(
+    title = "Figura 5",
+    subtitle = "Comparación conjunta de tasas de crecimiento anual",
+    x = "Tiempo (Trimestres)",
+    y = "Tasa de crecimiento anual",
+    linetype = "Serie"
+  ) +
+  
+  theme_classic(base_size = 11) +
+  theme(
+    plot.title = element_text(hjust = 0, face = "bold"),
+    plot.subtitle = element_text(hjust = 0),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+
+# =========================
+# MATRIZ DE VAR-COV (APA 6)
+# =========================
+
+matriz_cov <- data_growth %>%
+  select(CP, CI, CM, tc, tasa) %>%
+  na.omit() %>%
+  cov()
+
+# Renombrar para presentación
+colnames(matriz_cov) <- c("Consumo Privado",
+                         "Bienes Nacionales",
+                         "Bienes Importados",
+                         "Tipo de Cambio",
+                         "Tasa de Interés")
+
+rownames(matriz_cov) <- colnames(matriz_cov)
+
+# Mostrar tabla en formato limpio
+kable(
+  round(matriz_cov, 4),
+  caption = "Tabla 1. Matriz de varianzas y covarianzas"
+)
 ```
 
 *Descripción:*
+En la Figura 4 se presentan las tasas de crecimiento anual de las variables analizadas, lo que permite eliminar la tendencia de largo plazo y enfocarse en sus movimientos cíclicos. Se observa que el consumo privado y el consumo de bienes nacionales presentan fluctuaciones relativamente similares, lo que sugiere una fuerte relación entre ambas series, consistente con el hecho de que el consumo interno está dominado por bienes producidos domésticamente.
+
+Por otro lado, el consumo de bienes importados exhibe una mayor volatilidad, reflejando su sensibilidad a cambios en el tipo de cambio y en la demanda agregada. En particular, se aprecian caídas más pronunciadas en periodos de desaceleración económica.
+
+El tipo de cambio muestra variaciones importantes, especialmente en periodos de incertidumbre, lo que puede influir en el costo de los bienes importados y, por ende, en su consumo. La tasa de interés también presenta un comportamiento cíclico, aunque con menor volatilidad relativa, reflejando los ajustes de política monetaria a lo largo del tiempo.
+
+La matriz de varianzas y covarianzas confirma estos patrones: las mayores varianzas se observan en las series más volátiles, como el consumo de bienes importados y el tipo de cambio. Asimismo, se identifican covarianzas positivas entre el consumo privado y el consumo de bienes nacionales, lo que indica que tienden a moverse conjuntamente a lo largo del ciclo económico.
+
+En conjunto, estos resultados sugieren que el consumo está estrechamente ligado al ciclo económico, mientras que las variables financieras influyen en su dinámica a través de canales indirectos y con distinta intensidad.
 
 <!-- ============================================================ -->
 
@@ -84,5 +399,10 @@ library(ggplot2)
 > cambio sobre el consumo.
 
 *Conclusión:*
+El análisis realizado sugiere que tanto la tasa de interés como el tipo de cambio influyen en el comportamiento del consumo en México, aunque a través de distintos canales y con diferente intensidad. Por un lado, la tasa de interés afecta directamente las decisiones de consumo de los hogares al modificar el costo del crédito y el incentivo al ahorro. En periodos de tasas de interés más altas, el consumo tiende a desacelerarse, mientras que tasas más bajas favorecen el gasto.
+
+Por otro lado, el tipo de cambio incide principalmente a través de los precios relativos, en particular sobre el consumo de bienes importados. Una depreciación del tipo de cambio encarece los bienes del exterior, lo que puede reducir su consumo y generar una sustitución hacia bienes nacionales. Este efecto se observa en la mayor volatilidad del consumo de bienes importados y su sensibilidad a las fluctuaciones cambiarias.
+
+En conjunto, los resultados indican que el consumo es más estable y está más estrechamente vinculado a factores internos, como el ingreso y la producción nacional, mientras que las variables financieras, como la tasa de interés y el tipo de cambio, influyen de manera indirecta y lo explican en cierta medida. Esto sugiere que, estos factoresson relevantes pero no determinan por sí solos las fluctuaciones del consumo.
 
 ---
