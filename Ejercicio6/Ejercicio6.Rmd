@@ -8,7 +8,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo    = FALSE,   # 🔥 ESTO OCULTA TODO EL CÓDIGO
+  echo    = FALSE,   
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
@@ -151,7 +151,7 @@ Es decir, en general, los hogares con mayores ingresos tienden a presentar mayor
 No obstante, la dispersión de los puntos indica que esta relación no es perfecta, ya que existen hogares con ingresos similares pero niveles de riqueza muy distintos.
 Esto sugiere la presencia de heterogeneidad en la acumulación de riqueza.
 
-En general, la evidencia gráfica es consistente con la teoría económica, donde el ingreso constituye un determinante importante, aunque no exclusivo, de la riqueza.
+En general, la evidencia gráfica es consistente con la teoría económica, donde el ingreso constituye un determinante importante, aunque no el unico, de la riqueza.
 
 
 <!-- ============================================================ -->
@@ -170,7 +170,7 @@ library(knitr)
 # Base
 enfih_d <- enfih_full[, c("RAZ_1", "TLOC", "FAC_HOG")]
 
-# 🔥 FILTRAR valores válidos
+# FILTRAR valores válidos
 enfih_d <- enfih_d[enfih_d$RAZ_1 %in% 1:6, ]
 
 # Quitar NA
@@ -184,7 +184,7 @@ enfih_d$tam_loc <- factor(enfih_d$TLOC,
                                      "Urbano (15,000-99,999)",
                                      "Urbano grande (100,000+)"))
 
-# 🔥 Etiquetas reales de RAZ_1
+# Etiquetas reales de RAZ_1
 enfih_d$gasto_imp <- factor(enfih_d$RAZ_1,
                             levels = 1:6,
                             labels = c("Ahorros",
@@ -233,9 +233,9 @@ Esto sugiere la presencia de heterogeneidad en la acumulación de riqueza, posib
 Por otro lado, el tabulado sobre las formas de atender gastos imprevistos muestra diferencias según el tamaño de la localidad. 
 En general, los hogares en localidades urbanas presentan una mayor participación de mecanismos formales, como el uso de ahorros o el acceso a crédito, mientras que en localidades rurales es más común recurrir a apoyos familiares o estrategias informales.
 
-Esto sugiere que el acceso a instrumentos financieros formales está relacionado con el contexto urbano, donde existe mayor infraestructura financiera. 
-En contraste, en zonas rurales predominan mecanismos basados en redes sociales y familiares.
+Esto nos indica que el acceso a instrumentos financieros formales está relacionado con el contexto urbano, donde existe una mayor infraestructura financiera. 
+En contraste, en zonas rurales predominan mecanismos basados en relaciones sociales y familiares.
 
-En conjunto, los resultados indican que tanto el ingreso como el entorno en el que habitan los hogares influyen en su capacidad para acumular riqueza y enfrentar contingencias económicas.
+En conjunto, los resultados indican que tanto el ingreso como el entorno en el que habitan los hogares influyen en su capacidad para acumular riqueza y enfrentar emergencias económicas.
 
 
