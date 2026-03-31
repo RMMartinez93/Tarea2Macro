@@ -8,12 +8,13 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo    = TRUE,
+  echo    = FALSE,   # 🔥 ESTO OCULTA TODO EL CÓDIGO
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
   fig.pos  = "H"
 )
+
 
 # Common libraries — add more as needed
 library(tidyverse)
@@ -27,8 +28,12 @@ library(ggplot2)
 > *(1 hora, 0.5 puntos cada inciso)*
 
 ```{r ex6-setup}
-# Cargue los microdatos de la ENFIH-2019
-# enfih <- read.csv("enfih2019.csv")
+# Cargar ENFIH
+enfih <- read.csv("TCONCENTRADORA.csv", encoding = "latin1")
+tviv <- read.csv("TVIVIENDA.csv")
+
+enfih_full <- merge(enfih, tviv[, c("FOLIO", "TLOC")], by = "FOLIO")
+
 ```
 
 ## Inciso (a): Microdatos de la ENFIH
@@ -37,6 +42,14 @@ library(ggplot2)
 
 *Descripción del proceso de obtención de los datos:*
 
+Se obtuvieron los microdatos de la Encuesta Nacional de Inclusión Financiera (ENFIH) 2019 a través del portal oficial del INEGI.
+
+Para el análisis, se descargaron los archivos correspondientes a los módulos de la encuesta en formato CSV, en particular la base concentradora (TCONCENTRADORA) y el módulo de vivienda (TVIVIENDA), los cuales contienen información relevante sobre la riqueza de los hogares y las características de las localidades.
+
+Posteriormente, las bases de datos fueron importadas al entorno de R para su procesamiento y análisis. Asimismo, se realizó la integración de ambas bases mediante la variable de identificación del hogar (FOLIO), con el fin de incorporar la información sobre tamaño de localidad al análisis de riqueza.
+
+De esta manera, se obtuvo una base de datos consolidada que permite analizar la relación entre la riqueza neta de los hogares y diversas características socioeconómicas.
+
 <!-- ============================================================ -->
 
 ## Inciso (b): Riqueza Neta por Tamaño de Localidad
@@ -44,12 +57,57 @@ library(ggplot2)
 > Tabule el nivel de riqueza neta de los hogares de acuerdo al tamaño de la
 > localidad en la que radican.
 
-```{r ex6b}
-# Tabulado usando el código provisto por el INEGI
+Se construyó una tabla de contingencia entre el nivel de riqueza neta de los hogares y el tamaño de la localidad. 
+Para ello, se utilizó la variable TLOC proveniente del módulo de vivienda, la cual clasifica a las localidades según su tamaño.
+
+La riqueza neta se clasificó en quintiles y se emplearon factores de expansión (FAC_HOG) para obtener resultados representativos.
+
+```{r}
+library(survey)
+
+# Base con variable correcta
+enfih_b <- na.omit(enfih_full[, c("RIQ_NET", "TLOC", "FAC_HOG")])
+
+# Etiquetas de tamaño de localidad
+enfih_b$tam_loc <- factor(enfih_b$TLOC,
+                          levels = c(1,2,3,4),
+                          labels = c("Rural (<2,500 hab.)",
+                                     "Semiurbano (2,500-14,999)",
+                                     "Urbano (15,000-99,999)",
+                                     "Urbano grande (100,000+)"))
+
+# Niveles de riqueza
+enfih_b$nivel_riqueza <- cut(enfih_b$RIQ_NET,
+                            breaks = quantile(enfih_b$RIQ_NET, probs = seq(0,1,0.2), na.rm = TRUE),
+                            include.lowest = TRUE,
+                            labels = c("Muy baja","Baja","Media","Alta","Muy alta"))
+
+# Diseño muestral
+design_b <- svydesign(ids = ~1,
+                      weights = ~FAC_HOG,
+                      data = enfih_b)
+
+# Tabla de proporciones
+tabla_b <- svytable(~nivel_riqueza + tam_loc, design_b)
+tabla_prop <- prop.table(tabla_b, margin = 2)
+library(knitr)
+
+tabla_matrix <- round(tabla_prop, 3)
+
+kable(tabla_matrix,
+      caption = "Tabla 1. Distribución de la riqueza neta por tamaño de localidad",
+      align = "c")
+
 ```
 
 *Resultados:*
+A partir de la tabla, se observa que la distribución de la riqueza neta varía según el tamaño de la localidad.
+En las localidades rurales, existe una mayor presencia en los extremos de la distribución, tanto en niveles de riqueza muy baja como muy alta, lo que sugiere una mayor dispersión.
 
+En contraste, en las localidades urbanas y urbanas grandes, la riqueza se concentra en mayor medida en los niveles medio y bajo, con una menor proporción de hogares en el nivel de riqueza muy alta.
+Esto indica que, aunque las zonas urbanas concentran población, no necesariamente concentran proporcionalmente a los hogares con mayor riqueza.
+
+En general, los resultados sugieren que las localidades más grandes presentan una distribución de riqueza más centrada en niveles intermedios, mientras que las localidades más pequeñas muestran mayor heterogeneidad en la riqueza de los hogares.
 <!-- ============================================================ -->
 
 ## Inciso (c): Dispersión: Ingreso Corriente vs. Riqueza Neta
@@ -57,31 +115,127 @@ library(ggplot2)
 > Haga una gráfica de dispersión de la relación entre el ingreso corriente
 > efectivo y la riqueza neta (puede usarse una muestra de hogares).
 
-```{r ex6c}
-# Gráfica de dispersión
+Se construyó una gráfica de dispersión para analizar la relación entre el ingreso corriente de los hogares y su riqueza neta. 
+Dado que ambas variables presentan alta dispersión y valores extremos, se utilizaron transformaciones logarítmicas para mejorar la visualización.
+
+Asimismo, se tomó una muestra aleatoria de hogares con el fin de facilitar la interpretación gráfica.
+```{r, echo=FALSE}
+library(ggplot2)
+
+# Base
+enfih_c <- na.omit(enfih_full[, c("ING_TOTAL", "RIQ_NET")])
+
+# Quitar no positivos
+enfih_c <- enfih_c[enfih_c$ING_TOTAL > 0 & enfih_c$RIQ_NET > 0, ]
+
+# 🔥 Muestra MÁS pequeña
+set.seed(123)
+sample_c <- enfih_c[sample(nrow(enfih_c), 2000), ]
+
+# Gráfica mejorada
+ggplot(sample_c, aes(x = log(ING_TOTAL), y = log(RIQ_NET))) +
+  geom_point(alpha = 0.2, size = 1, color = "black") +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
+  labs(
+    title = "Figura 1. Relación entre ingreso corriente y riqueza neta",
+    x = "Log del ingreso corriente",
+    y = "Log de la riqueza neta"
+  ) +
+  theme_classic()
 ```
 
 *Descripción:*
+A partir de la gráfica, se observa una relación positiva entre el ingreso corriente y la riqueza neta de los hogares.
+Es decir, en general, los hogares con mayores ingresos tienden a presentar mayores niveles de riqueza.
+
+No obstante, la dispersión de los puntos indica que esta relación no es perfecta, ya que existen hogares con ingresos similares pero niveles de riqueza muy distintos.
+Esto sugiere la presencia de heterogeneidad en la acumulación de riqueza.
+
+En general, la evidencia gráfica es consistente con la teoría económica, donde el ingreso constituye un determinante importante, aunque no exclusivo, de la riqueza.
+
 
 <!-- ============================================================ -->
 
-## Inciso (d): Forma de Atender Gastos Imprevistos
+## Inciso (d): Atención de gastos imprevistos
 
-> Tabulado de las respuestas sobre cómo atienden gastos imprevistos, por tamaño
-> de localidad.
+Se construyó una tabla de contingencia entre la principal forma en que los hogares atienden gastos imprevistos y el tamaño de la localidad. 
+Para ello, se utilizó la variable RAZ_1, que identifica la estrategia principal empleada por el hogar.
 
-```{r ex6d}
-# Tabulado
+Asimismo, se emplearon factores de expansión (FAC_HOG) para obtener resultados representativos.
+
+```{r, echo=FALSE}
+library(survey)
+library(knitr)
+
+# Base
+enfih_d <- enfih_full[, c("RAZ_1", "TLOC", "FAC_HOG")]
+
+# 🔥 FILTRAR valores válidos
+enfih_d <- enfih_d[enfih_d$RAZ_1 %in% 1:6, ]
+
+# Quitar NA
+enfih_d <- na.omit(enfih_d)
+
+# Etiquetas de localidad
+enfih_d$tam_loc <- factor(enfih_d$TLOC,
+                          levels = c(1,2,3,4),
+                          labels = c("Rural (<2,500 hab.)",
+                                     "Semiurbano (2,500-14,999)",
+                                     "Urbano (15,000-99,999)",
+                                     "Urbano grande (100,000+)"))
+
+# 🔥 Etiquetas reales de RAZ_1
+enfih_d$gasto_imp <- factor(enfih_d$RAZ_1,
+                            levels = 1:6,
+                            labels = c("Ahorros",
+                                       "Préstamo familiar",
+                                       "Préstamo bancario",
+                                       "Venta de bienes",
+                                       "Apoyo gobierno",
+                                       "Otro"))
+
+# Diseño
+design_d <- svydesign(ids = ~1,
+                      weights = ~FAC_HOG,
+                      data = enfih_d)
+
+# Tabla
+tabla_d <- svytable(~gasto_imp + tam_loc, design_d)
+
+# Proporciones
+tabla_prop_d <- prop.table(tabla_d, margin = 2)
+
+# Formato APA
+tabla_matrix_d <- round(tabla_prop_d, 3)
+
+kable(tabla_matrix_d,
+      caption = "Tabla 2. Formas de atender gastos imprevistos por tamaño de localidad",
+      align = "c")
 ```
 
 *Resultados:*
+A partir de la tabla, se observa que las estrategias utilizadas por los hogares para enfrentar gastos imprevistos varían según el tamaño de la localidad.
+En general, algunas formas de financiamiento, como el uso de ahorros o el acceso a crédito, tienden a ser más frecuentes en localidades urbanas, mientras que en localidades rurales es más común recurrir a apoyos familiares u otras estrategias informales.
 
+Esto sugiere que el acceso a mecanismos formales de financiamiento está asociado al contexto urbano, mientras que en zonas rurales predominan redes de apoyo y mecanismos menos institucionalizados.
 <!-- ============================================================ -->
 
 ## Inciso (e): Interpretación
 
-> Interprete la gráfica y el tabulado.
-
 *Conclusión:*
 
----
+A partir de la gráfica de dispersión, se observa una relación positiva entre el ingreso corriente y la riqueza neta de los hogares. 
+En general, los hogares con mayores ingresos tienden a presentar mayores niveles de riqueza, lo cual es consistente con la teoría económica.
+
+Sin embargo, la dispersión de los puntos indica que esta relación no es perfecta, ya que existen hogares con ingresos similares pero niveles de riqueza muy distintos. 
+Esto sugiere la presencia de heterogeneidad en la acumulación de riqueza, posiblemente asociada a factores como el ahorro, las herencias o el acceso al crédito.
+
+Por otro lado, el tabulado sobre las formas de atender gastos imprevistos muestra diferencias según el tamaño de la localidad. 
+En general, los hogares en localidades urbanas presentan una mayor participación de mecanismos formales, como el uso de ahorros o el acceso a crédito, mientras que en localidades rurales es más común recurrir a apoyos familiares o estrategias informales.
+
+Esto sugiere que el acceso a instrumentos financieros formales está relacionado con el contexto urbano, donde existe mayor infraestructura financiera. 
+En contraste, en zonas rurales predominan mecanismos basados en redes sociales y familiares.
+
+En conjunto, los resultados indican que tanto el ingreso como el entorno en el que habitan los hogares influyen en su capacidad para acumular riqueza y enfrentar contingencias económicas.
+
+
