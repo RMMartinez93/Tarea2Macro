@@ -8,7 +8,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo    = FALSE,   # 🔥 CAMBIA ESTO
+  echo    = FALSE,  
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
@@ -135,7 +135,7 @@ Fuente: Banco de México. Sistema de Información Económica (SIE).
 
 ```{r ex5c}
 # =========================
-# INCISO (c): Gráficas (APA 6 limpio y legible)
+# INCISO (c): Gráficas 
 # =========================
 
 library(dplyr)
@@ -154,7 +154,7 @@ data_final <- consumo_limpio %>%
   left_join(tasa_trim, by = "trimestre")
 
 # =========================
-# FORMATO LARGO + ETIQUETAS
+# FORMATO LARGO 
 # =========================
 
 data_long <- data_final %>%
@@ -172,20 +172,16 @@ data_long <- data_final %>%
     "tasa" = "Tasa de Interés"
   ))
 
-# =========================
-# GRÁFICA MEJORADA
-# =========================
-
 ggplot(data_long, aes(x = trimestre, y = valor)) +
   geom_line(color = "black", size = 0.7) +
   
   facet_wrap(~variable, scales = "free_y", ncol = 2) +
   
-  scale_y_continuous(labels = comma) +  # quita notación científica
+  scale_y_continuous(labels = comma) +  
   
   scale_x_yearqtr(
     format = "%Y",
-    n = 6   # menos etiquetas → no se amontonan
+    n = 6   
   ) +
   
   labs(
@@ -208,10 +204,10 @@ ggplot(data_long, aes(x = trimestre, y = valor)) +
     
     legend.position = "none",
     
-    panel.spacing = unit(1.2, "lines")  # más espacio entre gráficas
+    panel.spacing = unit(1.2, "lines")  
   )
 # =========================
-# GRÁFICA ADICIONAL: MISMA ESCALA (APA 6)
+# GRÁFICA ADICIONAL: 
 # =========================
 
 ggplot(data_long, aes(x = trimestre, y = valor, linetype = variable)) +
@@ -282,10 +278,6 @@ data_growth <- data_final %>%
     ~ (. / lag(., 4) - 1)
   ))
 
-# =========================
-# FORMATO LARGO + ETIQUETAS
-# =========================
-
 data_growth_long <- data_growth %>%
   select(trimestre, CP, CI, CM, tc, tasa) %>%
   pivot_longer(
@@ -302,7 +294,7 @@ data_growth_long <- data_growth %>%
   ))
 
 # =========================
-# GRÁFICA PRINCIPAL (APA 6)
+# GRÁFICA PRINCIPAL 
 # =========================
 
 ggplot(data_growth_long, aes(x = trimestre, y = valor)) +
@@ -356,7 +348,7 @@ ggplot(data_growth_long, aes(x = trimestre, y = valor, linetype = variable)) +
   )
 
 # =========================
-# MATRIZ DE VAR-COV (APA 6)
+# MATRIZ DE VAR-COV 
 # =========================
 
 matriz_cov <- data_growth %>%
@@ -381,15 +373,15 @@ kable(
 ```
 
 *Descripción:*
-En la Figura 4 se presentan las tasas de crecimiento anual de las variables analizadas, lo que permite eliminar la tendencia de largo plazo y enfocarse en sus movimientos cíclicos. Se observa que el consumo privado y el consumo de bienes nacionales presentan fluctuaciones relativamente similares, lo que sugiere una fuerte relación entre ambas series, consistente con el hecho de que el consumo interno está dominado por bienes producidos domésticamente.
+En la Figura 4 se presentan las tasas de crecimiento anual de las variables analizadas, lo que permite eliminar la tendencia de largo plazo y enfocarse en los movimientos cíclicos. Se observa que el consumo privado y el consumo de bienes nacionales presentan fluctuaciones relativamente similares, lo que sugiere una fuerte relación entre ambas series, consistente con el hecho de que el consumo interno está dominado por bienes producidos domésticamente.
 
 Por otro lado, el consumo de bienes importados exhibe una mayor volatilidad, reflejando su sensibilidad a cambios en el tipo de cambio y en la demanda agregada. En particular, se aprecian caídas más pronunciadas en periodos de desaceleración económica.
 
 El tipo de cambio muestra variaciones importantes, especialmente en periodos de incertidumbre, lo que puede influir en el costo de los bienes importados y, por ende, en su consumo. La tasa de interés también presenta un comportamiento cíclico, aunque con menor volatilidad relativa, reflejando los ajustes de política monetaria a lo largo del tiempo.
 
-La matriz de varianzas y covarianzas confirma estos patrones: las mayores varianzas se observan en las series más volátiles, como el consumo de bienes importados y el tipo de cambio. Asimismo, se identifican covarianzas positivas entre el consumo privado y el consumo de bienes nacionales, lo que indica que tienden a moverse conjuntamente a lo largo del ciclo económico.
+La matriz de varianzas y covarianzas confirma estos patrones: las mayores varianzas se observan en las series más volátiles, como el consumo de bienes importados y el tipo de cambio. Asimismo, se identifican covarianzas positivas entre el consumo privado y el consumo de bienes nacionales, lo que indica que tienden a moverse de manera conjunta
 
-En conjunto, estos resultados sugieren que el consumo está estrechamente ligado al ciclo económico, mientras que las variables financieras influyen en su dinámica a través de canales indirectos y con distinta intensidad.
+
 
 <!-- ============================================================ -->
 
@@ -399,10 +391,10 @@ En conjunto, estos resultados sugieren que el consumo está estrechamente ligado
 > cambio sobre el consumo.
 
 *Conclusión:*
-El análisis realizado sugiere que tanto la tasa de interés como el tipo de cambio influyen en el comportamiento del consumo en México, aunque a través de distintos canales y con diferente intensidad. Por un lado, la tasa de interés afecta directamente las decisiones de consumo de los hogares al modificar el costo del crédito y el incentivo al ahorro. En periodos de tasas de interés más altas, el consumo tiende a desacelerarse, mientras que tasas más bajas favorecen el gasto.
+El análisis realizado sugiere que tanto la tasa de interés como el tipo de cambio influyen en el comportamiento del consumo en México, aunque a través de distintos mecanismos y con diferente intensidad. Por un lado, la tasa de interés afecta directamente las decisiones de consumo de los hogares al modificar el costo del crédito y el incentivo al ahorro. En periodos de tasas de interés más altas, el consumo tiende a desacelerarse, mientras que tasas más bajas favorecen el que los individuos quieran gastar.
 
-Por otro lado, el tipo de cambio incide principalmente a través de los precios relativos, en particular sobre el consumo de bienes importados. Una depreciación del tipo de cambio encarece los bienes del exterior, lo que puede reducir su consumo y generar una sustitución hacia bienes nacionales. Este efecto se observa en la mayor volatilidad del consumo de bienes importados y su sensibilidad a las fluctuaciones cambiarias.
+Por otro lado, el tipo de cambio incide principalmente a través de los precios relativos, en particular sobre el consumo de bienes importados. Una depreciación del tipo de cambio encarece los bienes del exterior, lo que puede reducir su consumo y generar una sustitución hacia bienes nacionales. Este efecto se observa en la mayor volatilidad del consumo de bienes importados y su sensibilidad al tipo de cambio
 
-En conjunto, los resultados indican que el consumo es más estable y está más estrechamente vinculado a factores internos, como el ingreso y la producción nacional, mientras que las variables financieras, como la tasa de interés y el tipo de cambio, influyen de manera indirecta y lo explican en cierta medida. Esto sugiere que, estos factoresson relevantes pero no determinan por sí solos las fluctuaciones del consumo.
+En conjunto, los resultados indican que el consumo es más estable y está más estrechamente vinculado a factores internos, como el ingreso y la producción nacional, mientras que las variables como la tasa de interés y el tipo de cambio, influyen de manera indirecta y lo explican en cierta medida. Esto sugiere que, estos factore sson relevantes pero no determinan por sí solos las fluctuaciones del consumo.
 
----
+
