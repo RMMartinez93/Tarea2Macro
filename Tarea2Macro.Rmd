@@ -86,450 +86,1515 @@ $$
 
 ---
 
-# Ejercicio 2: Simulación de Ingreso Permanente
+# 2. Simule una variedad de agentes que tienen ingresos permanentes diferentes e ingresos transitorios diferentes y calcule la relación entre consumo e ingreso que resulta de hacer diversos supuestos para las varianzas de cada tipo de ingreso, por medio de los pasos siguientes:[2 horas, 1 punto cada inciso]
 
-> **Instrucciones:** Simule una variedad de agentes con ingresos permanentes e
-> ingresos transitorios diferentes y calcule la relación entre consumo e ingreso
-> bajo diversos supuestos de varianza.
-> *(2 horas, 1 punto cada inciso)*
+\
 
-```{r ex2-params}
-# Parámetros globales — ajuste según sus supuestos
-set.seed(42)
+## (a) Cree un vector de 20 ingresos permanentes aleatorios $Y_i^P$, distribuidos normalmente, con media 10 y varianza $σ^P$. Cree 20 vectores (cada uno de estos vectoresrepresenta una persona) cada uno con 30 observaciones idénticas del ingreso permanente. Grafíquelos (eje x, persona; eje y, ingreso permanente).
 
-n_personas  <- 20    # número de individuos
-n_periodos  <- 30    # observaciones por individuo
-mu_Y_P      <- 10    # media del ingreso permanente
-sigma_P     <- 4     # varianza σ^P  (ajuste para el inciso g)
-sigma_T     <- 2     # varianza σ^T  (ajuste para el inciso h)
-sigma_eps   <- 1     # varianza σ^ε  (ajuste para el inciso i)
+``` {r inciso-a, echo=FALSE, fig.align='center'}
+# Fijamos semilla para reproducibilidad
+set.seed(123)
+
+# Parámetros
+n_personas <- 20
+n_periodos <- 30
+media_P <- 10
+sigma2_P <- 2  
+
+# 20 ingresos permanentes aleatorios
+YP <- rnorm(n = n_personas, mean = media_P, sd = sqrt(sigma2_P))
+
+# Matriz de 20 x 30: filas = ingreso permanente, columnaa = periodo
+YP_mat <- matrix(0, nrow = n_personas, ncol = n_periodos)
+
+for (i in 1:n_personas) {
+  YP_mat[i, ] <- rep(YP[i], n_periodos)
+}
+
 ```
 
-## Inciso (a): Ingresos Permanentes $Y^P_i$
+```{r grafica-inciso-a, fig.width=8, fig.height=5,  echo=FALSE, fig.align='center'}
+library(ggplot2)
 
-> Cree un vector de 20 ingresos permanentes aleatorios $Y^P_i$, distribuidos
-> normalmente, con media 10 y varianza $\sigma^P$. Cree 20 vectores (cada uno
-> representa una persona) con 30 observaciones idénticas del ingreso permanente.
-> Grafíquelos (eje x: persona; eje y: ingreso permanente).
-
-```{r ex2a}
-# --- Ingreso permanente ---
-Y_P <- rnorm(n_personas, mean = mu_Y_P, sd = sqrt(sigma_P))
-
-# Matriz: cada columna = una persona, cada fila = período
-Y_P_mat <- matrix(rep(Y_P, each = n_periodos),
-                  nrow = n_periodos, ncol = n_personas)
-
-# Data frame largo para graficar
-df_YP <- data.frame(
-  persona = rep(1:n_personas, each = n_periodos),
-  periodo = rep(1:n_periodos, times = n_personas),
-  Y_P     = as.vector(Y_P_mat)
+# Data frame
+df_P <- data.frame(
+  persona = 1:n_personas,
+  ingreso_permanente = YP
 )
 
-ggplot(df_YP, aes(x = persona, y = Y_P, group = persona)) +
-  geom_point(alpha = 0.3, color = "steelblue") +
-  geom_point(data = data.frame(persona = 1:n_personas, Y_P = Y_P),
-             color = "darkblue", size = 2) +
-  labs(title = "Ingreso Permanente por Persona",
-       x = "Persona", y = expression(Y^P)) +
-  theme_minimal()
-```
-
-*Descripción del resultado:*
-
-<!-- ============================================================ -->
-
-## Inciso (b): Ingresos Transitorios $Y^T_{i,t}$
-
-> Cree 20 vectores de 30 ingresos transitorios aleatorios $Y^T_{i,t}$,
-> distribuidos normalmente, con media 0 y varianza $\sigma^T$. Grafíquelos.
-
-```{r ex2b}
-# --- Ingreso transitorio ---
-Y_T_mat <- matrix(rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(sigma_T)),
-                  nrow = n_periodos, ncol = n_personas)
-
-df_YT <- data.frame(
-  persona = rep(1:n_personas, each = n_periodos),
-  periodo = rep(1:n_periodos, times = n_personas),
-  Y_T     = as.vector(Y_T_mat)
-)
-
-ggplot(df_YT, aes(x = periodo, y = Y_T, color = factor(persona))) +
-  geom_line(alpha = 0.6) +
-  labs(title = "Ingreso Transitorio por Persona y Período",
-       x = "Período", y = expression(Y^T), color = "Persona") +
+# Gráfica
+ggplot(df_P, aes(x = persona, y = ingreso_permanente)) +
+  geom_point(size = 2) +
+  geom_line() +
+  labs(
+    title = "Ingreso permanente por persona",
+    x = "Persona",
+    y = "Ingreso permanente"
+  ) +
   theme_minimal() +
-  theme(legend.position = "none")
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Descripción del resultado:*
+\
 
-<!-- ============================================================ -->
+## (b) Cree 20 vectores de 30 ingresos transitorios aleatorios $Y_{i,T}^T$, distribuidos normalmente, con media 0 y con varianza $σ^T$. Grafíquelos.
 
-## Inciso (c): Ingreso Total $Y_{i,t}$
+```{r inciso-b, echo=FALSE, fig.align='center'}
+# Parámetros del inciso (b)
+sigma2_T <- 0.5   # varianza sigma^T
 
-> Cree 20 vectores de 30 ingresos totales $Y_{i,t}$, sumando el ingreso
-> transitorio y el permanente. Grafíquelos.
+# Matriz de ingresos transitorios: filas = personas, columnas = periodos
+YT_mat <- matrix(
+  rnorm(n = n_personas * n_periodos, mean = 0, sd = sqrt(sigma2_T)),
+  nrow = n_personas,
+  ncol = n_periodos
+)
 
-```{r ex2c}
-# --- Ingreso total ---
-Y_mat <- Y_P_mat + Y_T_mat
+```
+
+```{r grafica-inciso-b, echo=FALSE, fig.align='center'}
+
+df_T <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  ingreso_transitorio = as.vector(t(YT_mat))
+)
+
+
+ggplot(df_T, aes(x = periodo, y = ingreso_transitorio, group = persona, color = factor(persona))) +
+  geom_line() +
+  labs(
+    title = "Ingreso transitorio por persona y periodo",
+    x = expression(Periodo),
+    y = expression(Y[i,t]^T),
+    color = "Persona"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  guides(
+    color = guide_legend(ncol = 2)
+  )
+```
+
+\
+
+## (c) Cree 20 vectores de 30 ingresos totales $Y_{i,T}^T$ sumando el ingreso transitorio y el permanente. Grafíquelos.
+
+```{r inciso-c, echo=FALSE}
+# Ingreso total: ingreso permanente + transitorio
+Y_mat <- YP_mat + YT_mat
+```
+
+
+```{r grafica-inciso-c, echo=FALSE, fig.align='center'}
 
 df_Y <- data.frame(
   persona = rep(1:n_personas, each = n_periodos),
   periodo = rep(1:n_periodos, times = n_personas),
-  Y       = as.vector(Y_mat)
+  ingreso_total = as.vector(t(Y_mat))
 )
 
-ggplot(df_Y, aes(x = periodo, y = Y, color = factor(persona))) +
-  geom_line(alpha = 0.6) +
-  labs(title = "Ingreso Total por Persona y Período",
-       x = "Período", y = expression(Y), color = "Persona") +
+
+ggplot(df_Y, aes(x = periodo, y = ingreso_total, group = persona, color = factor(persona))) +
+  geom_line() +
+  labs(
+    title = "Ingreso total por persona y periodo",
+    x = expression(Periodo),
+    y = expression(Y[i,t]),
+    color = "Persona"
+  ) +
   theme_minimal() +
-  theme(legend.position = "none")
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  guides(
+    color = guide_legend(ncol = 2)
+  )
 ```
 
-*Descripción del resultado:*
+\
 
-<!-- ============================================================ -->
+## (d) Cree 20 vectores de 30 errores de medición $ϵ_{i,T}$, distribuidos normalmente, con media 0 y varianza $σ^ϵ$ > 0. Grafíquelos.
 
-## Inciso (d): Errores de Medición $\epsilon_{i,t}$
+```{r inciso-d, echo=FALSE, fig.align='center'}
+# varianza
+sigma2_e <- 0.5    
 
-> Cree 20 vectores de 30 errores de medición $\epsilon_{i,t}$, distribuidos
-> normalmente, con media 0 y varianza $\sigma^\epsilon > 0$. Grafíquelos.
+# Matriz de errores de medición:filas = personas, columnas = periodos
+e_mat <- matrix(
+  rnorm(n = n_personas * n_periodos, mean = 0, sd = sqrt(sigma2_e)),
+  nrow = n_personas,
+  ncol = n_periodos
+)
+```
 
-```{r ex2d}
-# --- Errores de medición ---
-eps_mat <- matrix(rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(sigma_eps)),
-                  nrow = n_periodos, ncol = n_personas)
-
-df_eps <- data.frame(
+```{r datos-grafica-inciso-d, echo=FALSE, fig.align='center'}
+df_e <- data.frame(
   persona = rep(1:n_personas, each = n_periodos),
   periodo = rep(1:n_periodos, times = n_personas),
-  eps     = as.vector(eps_mat)
+  error_medicion = as.vector(t(e_mat))
 )
 
-ggplot(df_eps, aes(x = periodo, y = eps, color = factor(persona))) +
-  geom_line(alpha = 0.6) +
-  labs(title = "Errores de Medición por Persona y Período",
-       x = "Período", y = expression(epsilon), color = "Persona") +
+ggplot(df_e, aes(x = periodo, y = error_medicion, group = persona, color = factor(persona))) +
+  geom_line() +
+  labs(
+    title = "Errores de medición por persona y periodo",
+    x = expression(Periodo),
+    y = expression(epsilon[i,t]),
+    color = "Persona"
+  ) +
   theme_minimal() +
-  theme(legend.position = "none")
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  guides(
+    color = guide_legend(ncol = 2)
+  )
 ```
 
-*Descripción del resultado:*
+\
 
-<!-- ============================================================ -->
+## (e) Cree 20 vectores de 30 consumos $C_{i,T}$ cada uno, de acuerdo a la siguiente regla $C_{i,t} = Y_i^P + 0.1Y_{i,t}^T + ϵ_{i,t}$ Grafíquelos.
 
-## Inciso (e): Consumo $C_{i,t}$
+```{r inciso-e, echo=FALSE, echo=FALSE}
+# Consumo: C_{i,t} = Y_i^P + 0.1 Y_{i,t}^T + epsilon_{i,t}
+C_mat <- YP_mat + 0.1 * YT_mat + e_mat
 
-> Cree 20 vectores de 30 consumos $C_{i,t}$ de acuerdo a la regla:
-> $$C_{i,t} = Y^P_i + 0.1 Y^T_{i,t} + \epsilon_{i,t}$$
-> Grafíquelos.
+```
 
-```{r ex2e}
-# --- Consumo ---
-C_mat <- Y_P_mat + 0.1 * Y_T_mat + eps_mat
-
+```{r datos-grafica-inciso-e, echo=FALSE, fig.align='center'}
 df_C <- data.frame(
   persona = rep(1:n_personas, each = n_periodos),
   periodo = rep(1:n_periodos, times = n_personas),
-  C       = as.vector(C_mat)
+  consumo = as.vector(t(C_mat))
 )
 
-ggplot(df_C, aes(x = periodo, y = C, color = factor(persona))) +
-  geom_line(alpha = 0.6) +
-  labs(title = "Consumo por Persona y Período",
-       x = "Período", y = expression(C), color = "Persona") +
+ggplot(df_C, aes(x = periodo, y = consumo, group = persona, color = factor(persona))) +
+  geom_line() +
+  labs(
+    title = "Consumo por persona y periodo",
+    x = expression(Periodo),
+    y = expression(C[i,t]),
+    color = "Persona"
+  ) +
   theme_minimal() +
-  theme(legend.position = "none")
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  guides(
+    color = guide_legend(ncol = 2)
+  )
 ```
 
-*Descripción del resultado:*
+\
 
-<!-- ============================================================ -->
+## (f) Estime la relación lineal entre ingreso total y consumo $C_{i,t}= α + βY_{i,t} + ϵ_{i,t}$. Describa el resultado de su estimación y grafíque la relación entre las observaciones del consumo y las del ingreso.
 
-## Inciso (f): Estimación $C_{i,t} = \alpha + \beta Y_{i,t} + \epsilon_{i,t}$
+```{r inciso-f, echo=FALSE}
+# Base para la regresión
+df_reg <- data.frame(
+  persona = rep(1:n_personas, each = n_periodos),
+  periodo = rep(1:n_periodos, times = n_personas),
+  Y = as.vector(t(Y_mat)),
+  C = as.vector(t(C_mat))
+)
 
-> Estime la relación lineal entre ingreso total y consumo. Describa el resultado
-> y grafique la relación entre las observaciones de consumo y las de ingreso.
+# Estimación por MCO
+modelo_f <- lm(C ~ Y, data = df_reg)
 
-```{r ex2f}
-# --- Regresión ---
-df_reg <- data.frame(C = as.vector(C_mat), Y = as.vector(Y_mat))
-modelo  <- lm(C ~ Y, data = df_reg)
-summary(modelo)
+# Extraer coeficientes estimados
+alpha_hat <- coef(modelo_f)[1]
+beta_hat  <- coef(modelo_f)[2]
+
+alpha_hat
+beta_hat
+```
+
+
+```{r datos-grafica-inciso-f, echo=FALSE, message=FALSE, fig.align='center'}
 
 ggplot(df_reg, aes(x = Y, y = C)) +
-  geom_point(alpha = 0.3, color = "steelblue") +
-  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
-  labs(title = expression(paste("Consumo vs. Ingreso Total: ",
-                                C[it] == alpha + beta*Y[it] + epsilon[it])),
-       x = "Ingreso Total Y", y = "Consumo C") +
-  theme_minimal()
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Relación entre ingreso total y consumo",
+    x = expression(Y[i,t]),
+    y = expression(C[i,t])
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Interpretación:*
+Se estimó mediante mínimos cuadrados ordinarios la relación lineal entre el consumo y el ingreso total, de acuerdo con la especificación $C_{i,t}= α + βY_{i,t} + ϵ_{i,t}$. Los resultados muestran una relación positiva entre ambas variables, lo que indica que mayores niveles de ingreso total se asocian con mayores niveles de consumo.
 
-<!-- ============================================================ -->
+El coeficiente estimado $\hat{\beta}$ es menor que uno, lo cual es consistente con la forma en que se generaron los datos. En particular, el consumo depende completamente del ingreso permanente, pero solo parcialmente del ingreso transitorio, con un coeficiente de 0.1. Dado que el ingreso total combina ambos componentes, la pendiente estimada refleja una respuesta promedio del consumo al ingreso que se encuentra entre ambos efectos.
 
-## Inciso (g): $\hat{\beta}$ vs. $\sigma^P$
+Asimismo, la dispersión de los datos alrededor de la recta estimada se explica por la presencia del término de error de medición, el cual introduce variabilidad adicional en el consumo. En conjunto, los resultados son coherentes con la estructura teórica del modelo de ingreso permanente.
 
-> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^P$.
+\
 
-```{r ex2g}
-sigma_P_vals <- seq(0.5, 20, by = 0.5)
+## (g) Grafíque la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $σ^P$.
 
-beta_sigmaP <- sapply(sigma_P_vals, function(sp) {
-  YP_   <- rnorm(n_personas, mean = mu_Y_P, sd = sqrt(sp))
-  YPm   <- matrix(rep(YP_, each = n_periodos), nrow = n_periodos)
-  YTm   <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_T)), nrow = n_periodos)
-  Em    <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_eps)), nrow = n_periodos)
-  Cm    <- YPm + 0.1 * YTm + Em
-  Ym    <- YPm + YTm
-  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
-})
+```{r inciso-g, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
 
-df_g <- data.frame(sigma_P = sigma_P_vals, beta_hat = beta_sigmaP)
+sigma2_P_vals <- seq(1, 10, by = 1)
+beta_hat_vals <- numeric(length(sigma2_P_vals))
 
-ggplot(df_g, aes(x = sigma_P, y = beta_hat)) +
-  geom_line(color = "steelblue") +
+n_sim <- 100  # número de simulaciones
+
+for (j in 1:length(sigma2_P_vals)) {
+  
+  beta_sim <- numeric(n_sim)
+  
+  for (s in 1:n_sim) {
+    
+    sigma2_P <- sigma2_P_vals[j]
+    
+    # Ingreso permanente
+    YP <- rnorm(n_personas, mean = media_P, sd = sqrt(sigma2_P))
+    YP_mat <- matrix(rep(YP, each = n_periodos), nrow = n_personas)
+    
+    # Ingreso transitorio
+    YT_mat <- matrix(
+      rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(0.2)),
+      nrow = n_personas,
+      ncol = n_periodos
+    )
+    
+    # Error
+    e_mat <- matrix(
+      rnorm(n_personas * n_periodos, mean = 0, sd = sqrt(0.2)),
+      nrow = n_personas,
+      ncol = n_periodos
+    )
+    
+    # Construcción
+    Y_mat <- YP_mat + YT_mat
+    C_mat <- YP_mat + 0.1 * YT_mat + e_mat
+    
+    df_reg <- data.frame(
+      Y = as.vector(t(Y_mat)),
+      C = as.vector(t(C_mat))
+    )
+    
+    beta_sim[s] <- coef(lm(C ~ Y, data = df_reg))[2]
+  }
+  
+  beta_hat_vals[j] <- mean(beta_sim)
+}
+
+df_g <- data.frame(
+  sigma2_P = sigma2_P_vals,
+  beta_hat = beta_hat_vals
+)
+
+ggplot(df_g, aes(x = sigma2_P, y = beta_hat)) +
   geom_point() +
-  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^P)),
-       x = expression(sigma^P), y = expression(hat(beta))) +
-  theme_minimal()
+  geom_line() +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Interpretación:*
+La gráfica muestra una relación positiva entre la varianza del ingreso permanente $\sigma^P$ y la pendiente estimada $\hat{\beta}$. A medida que aumenta $\sigma^P$, una mayor proporción de la variación del ingreso total proviene del componente permanente, al cual el consumo responde completamente. Por ello, la estimación de $\hat{\beta}$ tiende a incrementarse y acercarse a uno, reflejando una relación más estrecha entre el ingreso total y el consumo.
 
-<!-- ============================================================ -->
+\
 
-## Inciso (h): $\hat{\beta}$ vs. $\sigma^T$
+## (h) Grafíque la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $σ^T$.
 
-> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^T$.
+```{r inciso-h, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+# Valores de la varianza del ingreso transitorio
+sigma2_T_vals <- seq(1, 10, by = 1)
 
-```{r ex2h}
-sigma_T_vals <- seq(0.1, 20, by = 0.5)
+# Número de simulaciones por cada valor de varianza
+n_sim <- 100
 
-beta_sigmaT <- sapply(sigma_T_vals, function(st) {
-  YPm <- matrix(rep(rnorm(n_personas, mu_Y_P, sqrt(sigma_P)), each = n_periodos),
-                nrow = n_periodos)
-  YTm <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(st)), nrow = n_periodos)
-  Em  <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_eps)), nrow = n_periodos)
-  Cm  <- YPm + 0.1 * YTm + Em
-  Ym  <- YPm + YTm
-  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
-})
+# Vector para guardar el promedio de las pendientes estimadas
+beta_hat_vals_T <- numeric(length(sigma2_T_vals))
 
-df_h <- data.frame(sigma_T = sigma_T_vals, beta_hat = beta_sigmaT)
+# Simulación para cada valor de sigma^T
+for (j in 1:length(sigma2_T_vals)) {
+  
+  sigma2_T <- sigma2_T_vals[j]
+  
+  # Vector para guardar las pendientes de cada simulación
+  beta_sim <- numeric(n_sim)
+  
+  for (s in 1:n_sim) {
+    
+    # 1. Ingreso permanente fijo en su varianza base
+    YP <- rnorm(n = n_personas, mean = media_P, sd = sqrt(sigma2_P))
+    YP_mat <- matrix(0, nrow = n_personas, ncol = n_periodos)
+    
+    for (i in 1:n_personas) {
+      YP_mat[i, ] <- rep(YP[i], n_periodos)
+    }
+    
+    # 2. Ingreso transitorio con varianza cambiante
+    YT_mat <- matrix(
+      rnorm(n = n_personas * n_periodos, mean = 0, sd = sqrt(sigma2_T)),
+      nrow = n_personas,
+      ncol = n_periodos
+    )
+    
+    # 3. Error de medición fijo en su varianza base
+    e_mat <- matrix(
+      rnorm(n = n_personas * n_periodos, mean = 0, sd = sqrt(sigma2_e)),
+      nrow = n_personas,
+      ncol = n_periodos
+    )
+    
+    # 4. Ingreso total
+    Y_mat <- YP_mat + YT_mat
+    
+    # 5. Consumo
+    C_mat <- YP_mat + 0.1 * YT_mat + e_mat
+    
+    # 6. Base para estimar
+    df_reg <- data.frame(
+      Y = as.vector(t(Y_mat)),
+      C = as.vector(t(C_mat))
+    )
+    
+    # 7. Estimación
+    modelo_h <- lm(C ~ Y, data = df_reg)
+    
+    # 8. Guardar beta de esta simulación
+    beta_sim[s] <- coef(modelo_h)[2]
+  }
+  
+  # Promedio de las pendientes para este valor de sigma^T
+  beta_hat_vals_T[j] <- mean(beta_sim)
+}
 
-ggplot(df_h, aes(x = sigma_T, y = beta_hat)) +
-  geom_line(color = "darkorange") +
-  geom_point() +
-  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^T)),
-       x = expression(sigma^T), y = expression(hat(beta))) +
-  theme_minimal()
+# Data frame final para graficar
+df_h <- data.frame(
+  sigma2_T = sigma2_T_vals,
+  beta_hat = beta_hat_vals_T
+)
+
+# Gráfica
+ggplot(df_h, aes(x = sigma2_T, y = beta_hat)) +
+  geom_point(size = 2) +
+  geom_line() +
+  labs(
+    title = expression(paste("Relación entre ", hat(beta), " y ", sigma^T)),
+    x = expression(sigma^T),
+    y = expression(hat(beta))
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Interpretación:*
+La gráfica muestra una relación negativa entre la varianza del ingreso transitorio $\sigma^T$ y la pendiente estimada $\hat{\beta}$. A medida que aumenta $\sigma^T$, una mayor proporción de la variación del ingreso total proviene del componente transitorio, al cual el consumo responde solo parcialmente. En consecuencia, la estimación de $\hat{\beta}$ tiende a disminuir, acercándose al coeficiente asociado al ingreso transitorio, que en este caso es 0.1.
 
-<!-- ============================================================ -->
+\
 
-## Inciso (i): $\hat{\beta}$ vs. $\sigma^\epsilon$
+## (i) Grafíque la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $σ^ϵ$.
 
-> Grafique la relación que resulta entre la $\hat{\beta}$ estimada y la varianza $\sigma^\epsilon$.
 
-```{r ex2i}
-sigma_eps_vals <- seq(0.1, 20, by = 0.5)
+```{r inciso-i, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+# Valores de la varianza del error de medición
+sigma2_e_vals <- seq(1, 10, by = 1)
 
-beta_sigmaE <- sapply(sigma_eps_vals, function(se) {
-  YPm <- matrix(rep(rnorm(n_personas, mu_Y_P, sqrt(sigma_P)), each = n_periodos),
-                nrow = n_periodos)
-  YTm <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(sigma_T)), nrow = n_periodos)
-  Em  <- matrix(rnorm(n_personas * n_periodos, 0, sqrt(se)), nrow = n_periodos)
-  Cm  <- YPm + 0.1 * YTm + Em
-  Ym  <- YPm + YTm
-  coef(lm(as.vector(Cm) ~ as.vector(Ym)))[2]
-})
+# Número de simulaciones por cada valor de varianza
+n_sim <- 100
 
-df_i <- data.frame(sigma_eps = sigma_eps_vals, beta_hat = beta_sigmaE)
+# Vector para guardar el promedio de las pendientes estimadas
+beta_hat_vals_e <- numeric(length(sigma2_e_vals))
 
-ggplot(df_i, aes(x = sigma_eps, y = beta_hat)) +
-  geom_line(color = "darkgreen") +
-  geom_point() +
-  labs(title = expression(paste(hat(beta), " estimada vs. ", sigma^epsilon)),
-       x = expression(sigma^epsilon), y = expression(hat(beta))) +
-  theme_minimal()
+# Simulación para cada valor de sigma^epsilon
+for (j in 1:length(sigma2_e_vals)) {
+  
+  sigma2_e_loop <- sigma2_e_vals[j]
+  
+  # Vector para guardar las pendientes de cada simulación
+  beta_sim <- numeric(n_sim)
+  
+  for (s in 1:n_sim) {
+    
+    # 1. Ingreso permanente fijo en su varianza base
+    YP <- rnorm(n = n_personas, mean = media_P, sd = sqrt(sigma2_P))
+    YP_mat <- matrix(0, nrow = n_personas, ncol = n_periodos)
+    
+    for (i in 1:n_personas) {
+      YP_mat[i, ] <- rep(YP[i], n_periodos)
+    }
+    
+    # 2. Ingreso transitorio fijo en su varianza base
+    YT_mat <- matrix(
+      rnorm(n = n_personas * n_periodos, mean = 0, sd = sqrt(sigma2_T)),
+      nrow = n_personas,
+      ncol = n_periodos
+    )
+    
+    # 3. Error de medición con varianza cambiante
+    e_mat <- matrix(
+      rnorm(n = n_personas * n_periodos, mean = 0, sd = sqrt(sigma2_e_loop)),
+      nrow = n_personas,
+      ncol = n_periodos
+    )
+    
+    # 4. Ingreso total
+    Y_mat <- YP_mat + YT_mat
+    
+    # 5. Consumo
+    C_mat <- YP_mat + 0.1 * YT_mat + e_mat
+    
+    # 6. Base para estimar
+    df_reg <- data.frame(
+      Y = as.vector(t(Y_mat)),
+      C = as.vector(t(C_mat))
+    )
+    
+    # 7. Estimación
+    modelo_i <- lm(C ~ Y, data = df_reg)
+    
+    # 8. Guardar beta de esta simulación
+    beta_sim[s] <- coef(modelo_i)[2]
+  }
+  
+  # Promedio de las pendientes para este valor de sigma^epsilon
+  beta_hat_vals_e[j] <- mean(beta_sim)
+}
+
+# Data frame final para graficar
+df_i <- data.frame(
+  sigma2_e = sigma2_e_vals,
+  beta_hat = beta_hat_vals_e
+)
+
+# Gráfica
+ggplot(df_i, aes(x = sigma2_e, y = beta_hat)) +
+  geom_point(size = 2) +
+  geom_line() +
+  labs(
+    title = expression(paste("Relación entre ", hat(beta), " y ", sigma^{epsilon})),
+    x = expression(sigma^{epsilon}),
+    y = expression(hat(beta))
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+  
 ```
 
-*Interpretación:*
+La gráfica muestra que, al aumentar la varianza del error de medición $\sigma^{\epsilon}$, la pendiente estimada $\hat{\beta}$ no presenta una tendencia sistemática clara, pero sí exhibe mayor variabilidad. Esto se debe a que el incremento en $\sigma^{\epsilon}$ introduce más ruido en la relación entre consumo e ingreso total, lo que reduce la precisión de la estimación. 
+
+\
+
 
 ---
 
-# Ejercicio 3: Consumo Agregado en México
+# 3. Estudie el consumo agregado en México y de algún otro país (Eq 1: Brasil, Eq 2:Colombia, Eq 3: Canadá, Eq 4: Estados Unidos, Eq 5: España) siguiendo estos pasos:[3 horas, 0.5 puntos cada inciso]
 
-> **Instrucciones:** Estudie el consumo agregado en México y en **[país asignado
-> al equipo]**, siguiendo los pasos indicados.
-> *(3 horas, 0.5 puntos cada inciso)*
+\
 
-```{r ex3-setup}
-# Cargue aquí los paquetes necesarios para manejo de datos INEGI / BandPassFilter
-# library(mFilter)    # filtros HP y Band-Pass
-# library(neverhpfilter) # alternativa para HP
-# Cargue los datos descargados del INEGI
+## (a) Obtenga, del Inegi, datos trimestrales de México, para "C", el consumo agregado, "Cs", el consumo agregado de servicios , "Cb", el consumo agregado de bienes, de "Y", el producto agregado, de "I", la inversión agregada, de "G", el gasto del gobierno y de "NX", las exportaciones netas, entre 1980 y el cuarto trimestre de 2025, EN TÉRMINOS REALES.
+
+```{r construir_base, message=FALSE, warning=FALSE, echo=FALSE}
+library(readxl)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(here)
+
+Y  <- read_excel(here("Ejercicio3","Producto Interno Bruto.xlsx"))
+C  <- read_excel(here("Ejercicio3","Consumo privado.xlsx"))
+Cb <- read_excel(here("Ejercicio3","Consumo agregado de bienes.xlsx"))
+Cs <- read_excel(here("Ejercicio3","Consumo agregado de servicios.xlsx"))
+I  <- read_excel(here("Ejercicio3","Formación bruta de capital fijo.xlsx"))
+G  <- read_excel(here("Ejercicio3","Consumo de gobierno.xlsx"))
+NX <- read_excel(here("Ejercicio3","Exportaciones netas de bienes y servicios.xlsx"))
+
+# Unir todo por periodo
+df <- Y %>%
+  left_join(C,  by = "Periodo") %>%
+  left_join(Cb, by = "Periodo") %>%
+  left_join(Cs, by = "Periodo") %>%
+  left_join(I,  by = "Periodo") %>%
+  left_join(G,  by = "Periodo") %>%
+  left_join(NX, by = "Periodo")
+
+df %>%
+  kable(
+    format = "html",
+    digits = 2,
+    align = "c",
+    caption = "Tabla 1. Variables macroeconómicas a precios constantes (base 2018)",
+    col.names = c("Periodo", "PIB (Y)", "Consumo (C)", "Consumo bienes (Cb)",
+                  "Consumo servicios (Cs)", "Inversión (I)", "Gobierno (G)",
+                  "Exportaciones netas (NX)")
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center") %>%
+  row_spec(0, align = "c")
+
 ```
 
-## Inciso (a): Obtención de Datos
+Las series utilizadas se construyeron a partir de las cuentas nacionales del INEGI empleando exclusivamente datos a precios constantes con año base 2018, con el fin de garantizar la comparabilidad temporal. Se obtuvieron las variables de consumo privado total (C), desagregadas en bienes (Cb) y servicios (Cs), así como la formación bruta de capital fijo (I), el consumo de gobierno (G) y las exportaciones netas (NX = X − M). Se incorporaron la variación de existencias y la discrepancia estadística para verificar la consistencia contable. Se comprobó que la identidad macroeconómica Y = C + I + G + NX + VE + DE se cumple exactamente en todos los periodos, validando la correcta construcción y alineación de las bases. Aunque la serie del PIB está disponible desde 1980, el resto de las variables solo se encuentra de forma consistente a partir de 1993 bajo el mismo año base, por lo que el análisis se restringe a dicho periodo.
 
-> Obtenga datos trimestrales de México para $C$, $C_s$, $C_b$, $Y$, $I$, $G$ y
-> $NX$ en términos reales, entre 1980 y el cuarto trimestre de 2025.
+\
 
-```{r ex3a}
-# Cargue los datos del INEGI aquí
-# Ejemplo:
-# datos_mex <- read.csv("datos_inegi.csv")
+## (b) Grafíque dichas series de tiempo juntas para compáralas visualmente. (Comparela gráfca de las variables (de las que son siempre positivas) en dos versiones: a) su valor real original, y b) después de sacarles el logaritmo natural).
+
+\
+
+```{r 3_b, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(zoo)
+
+df <- df %>%
+  mutate(
+    Periodo = as.yearqtr(Periodo, format = "%Y/%q")
+  )
+
+#Serie
+
+df_long <- df %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+#Gráfica de niveles
+
+ggplot(df_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Variables macroeconómicas en niveles reales (base 2018)",
+    x = "Periodo",
+    y = "Nivel"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Descripción de las fuentes y variables obtenidas:*
+\
 
-<!-- ============================================================ -->
+En niveles reales se observa una tendencia creciente de largo plazo en todas las variables, consistente con el crecimiento económico. Sin embargo, las diferencias de escala dificultan la comparación de sus fluctuaciones, destacando que el producto y el consumo agregado dominan visualmente la gráfica, mientras que la inversión y el gasto público presentan mayor variabilidad relativa. Asimismo, se aprecia una caída pronunciada en 2020, asociada al choque de la pandemia, particularmente marcada en la inversión y el consumo.
 
-## Inciso (b): Gráficas de Series de Tiempo
+\
 
-> Grafique las series juntas para compararlas visualmente, en dos versiones:
-> a) valor real original y b) logaritmo natural.
+```{r 3_bb, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+#Versión logarítmica
 
-```{r ex3b-niveles}
-# Gráfica en niveles
+df_log <- df %>%
+  mutate(
+    log_Y  = log(Y),
+    log_C  = log(C),
+    log_Cb = log(Cb),
+    log_Cs = log(Cs),
+    log_I  = log(I),
+    log_G  = log(G)
+  ) %>%
+  select(Periodo, starts_with("log_")) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+#Gráfica de los logaritmos
+
+ggplot(df_log, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Variables macroeconómicas en logaritmos",
+    x = "Periodo",
+    y = "Logaritmo"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
 ```
 
-```{r ex3b-logs}
+En logaritmos se eliminan los efectos de escala, lo que permite comparar directamente las trayectorias y fluctuaciones de las variables. Se observa un fuerte comovimiento entre el producto y el consumo agregado, así como una mayor volatilidad de la inversión. El consumo de servicios muestra una evolución más estable, mientras que el consumo de bienes es más sensible al ciclo económico. La contracción de 2020 es claramente visible en todas las series, confirmando la naturaleza cíclica de estas variables.
+
+\
+
+## (c) Construya las versiones "fltradas" (también llamadas "cíclicas" o "después de eliminar la tendencia") de estas mismas series, de la siguiente forma:
+
+\
+
+- Construya la tasa de crecimiento, $Δ % at = (at − at−1)/(at−1)$, (cambios vs el año anterior) de todas estas series. Grafíque las series juntas para identificar sus movimientos comunes. Obtenga la matriz de varianzas y covarianzas de las series.
+
+```{r 3_ca, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+
+# Construcción de tasas de crecimiento anual (t vs t-4)
+df_growth <- df %>%
+  arrange(Periodo) %>%
+  mutate(
+    g_Y  = (Y  - lag(Y, 4))  / lag(Y, 4),
+    g_C  = (C  - lag(C, 4))  / lag(C, 4),
+    g_Cb = (Cb - lag(Cb, 4)) / lag(Cb, 4),
+    g_Cs = (Cs - lag(Cs, 4)) / lag(Cs, 4),
+    g_I  = (I  - lag(I, 4))  / lag(I, 4),
+    g_G  = (G  - lag(G, 4))  / lag(G, 4),
+    g_NX = (NX - lag(NX, 4)) / lag(NX, 4)
+  )
+
+df_growth_long <- df_growth %>%
+  select(Periodo, starts_with("g_")) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+# Gráfica de tasas de crecimiento
+ggplot(df_growth_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Tasas de crecimiento anual de las variables macroeconómicas",
+    x = "Periodo",
+    y = "Tasa de crecimiento"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+# Matriz de varianzas y covarianzas
+matriz_cov_growth <- df_growth %>%
+  select(starts_with("g_")) %>%
+  na.omit() %>%
+  cov()
+
+matriz_cov_growth %>%
+  kable(
+    format = "html",
+    digits = 6,
+    align = "c",
+    caption = "Matriz de varianzas y covarianzas de las tasas de crecimiento anual"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
+
+```
+
+\
+
+- Construya la versión "fltrada de las series, usando un "filtro HP" (la idea es tomar la llamada "parte cíclica"). Grafíque las series juntas para identificar sus movimientos comunes. Obtenga la matriz de varianzas y covarianzas delas series.
+
+\
+
+```{r 3_c_2, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(mFilter)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+
+# Aplicar filtro HP sobre logaritmos
+df_hp <- df %>%
+  arrange(Periodo) %>%
+  mutate(
+    log_Y  = log(Y),
+    log_C  = log(C),
+    log_Cb = log(Cb),
+    log_Cs = log(Cs),
+    log_I  = log(I),
+    log_G  = log(G)
+  )
+
+# Obtener componente cíclico (HP)
+hp_Y  <- hpfilter(df_hp$log_Y,  freq = 1600)$cycle
+hp_C  <- hpfilter(df_hp$log_C,  freq = 1600)$cycle
+hp_Cb <- hpfilter(df_hp$log_Cb, freq = 1600)$cycle
+hp_Cs <- hpfilter(df_hp$log_Cs, freq = 1600)$cycle
+hp_I  <- hpfilter(df_hp$log_I,  freq = 1600)$cycle
+hp_G  <- hpfilter(df_hp$log_G,  freq = 1600)$cycle
+
+# Base con ciclos
+df_hp_cycle <- df_hp %>%
+  mutate(
+    hp_Y  = hp_Y,
+    hp_C  = hp_C,
+    hp_Cb = hp_Cb,
+    hp_Cs = hp_Cs,
+    hp_I  = hp_I,
+    hp_G  = hp_G
+  )
+
+# Formato largo
+df_hp_long <- df_hp_cycle %>%
+  select(Periodo, starts_with("hp_")) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+# Gráfica de componentes cíclicos
+ggplot(df_hp_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Componentes cíclicos (filtro HP, λ = 1600)",
+    x = "Periodo",
+    y = "Ciclo"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+# Matriz de varianzas y covarianzas
+matriz_cov_hp <- df_hp_cycle %>%
+  select(starts_with("hp_")) %>%
+  na.omit() %>%
+  cov()
+
+matriz_cov_hp %>%
+  kable(
+    format = "html",
+    digits = 6,
+    align = "c",
+    caption = "Matriz de varianzas y covarianzas (componentes cíclicos, filtro HP)"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
+
+```
+
+\
+
+- Construya la versión filtrada de las series, usando un "filtro Band-Pass". Grafique las series juntas para identificar sus movimientos comunes. Obtenga la matriz de varianzas y covarianzas de las series.
+
+```{r 3_c_3, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(mFilter)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+
+# Aplicar filtro Band-Pass (Christiano-Fitzgerald) sobre logaritmos
+df_bp <- df %>%
+  arrange(Periodo) %>%
+  mutate(
+    log_Y  = log(Y),
+    log_C  = log(C),
+    log_Cb = log(Cb),
+    log_Cs = log(Cs),
+    log_I  = log(I),
+    log_G  = log(G)
+  )
+
+# Obtener componente cíclico con filtro Christiano-Fitzgerald
+bp_Y  <- cffilter(df_bp$log_Y,  pl = 6, pu = 32, root = FALSE)$cycle
+bp_C  <- cffilter(df_bp$log_C,  pl = 6, pu = 32, root = FALSE)$cycle
+bp_Cb <- cffilter(df_bp$log_Cb, pl = 6, pu = 32, root = FALSE)$cycle
+bp_Cs <- cffilter(df_bp$log_Cs, pl = 6, pu = 32, root = FALSE)$cycle
+bp_I  <- cffilter(df_bp$log_I,  pl = 6, pu = 32, root = FALSE)$cycle
+bp_G  <- cffilter(df_bp$log_G,  pl = 6, pu = 32, root = FALSE)$cycle
+
+# Base con ciclos
+df_bp_cycle <- df_bp %>%
+  mutate(
+    bp_Y  = bp_Y,
+    bp_C  = bp_C,
+    bp_Cb = bp_Cb,
+    bp_Cs = bp_Cs,
+    bp_I  = bp_I,
+    bp_G  = bp_G
+  )
+
+# Formato largo
+df_bp_long <- df_bp_cycle %>%
+  select(Periodo, starts_with("bp_")) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+# Gráfica de componentes cíclicos
+ggplot(df_bp_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Componentes cíclicos (filtro Band-Pass Christiano-Fitzgerald)",
+    x = "Periodo",
+    y = "Ciclo"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+# Matriz de varianzas y covarianzas
+matriz_cov_bp <- df_bp_cycle %>%
+  select(starts_with("bp_")) %>%
+  na.omit() %>%
+  cov()
+
+matriz_cov_bp %>%
+  kable(
+    format = "html",
+    digits = 6,
+    align = "c",
+    caption = "Matriz de varianzas y covarianzas (componentes cíclicos, filtro Band-Pass Christiano-Fitzgerald)"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+
+\
+
+- Graque la versión filtrada de las series, usando un "filtro Beveridge-Nelson". Grafique las series juntas para identificar sus movimientos comunes. Obtenga la matriz de varianzas y covarianzas de las series.'
+
+```{r 3_c_4, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+
+# Base para Beveridge-Nelson: logaritmos y primeras diferencias
+df_bn <- df %>%
+  arrange(Periodo) %>%
+  mutate(
+    log_Y  = log(Y),
+    log_C  = log(C),
+    log_Cb = log(Cb),
+    log_Cs = log(Cs),
+    log_I  = log(I),
+    log_G  = log(G),
+    dlog_Y  = c(NA, diff(log_Y)),
+    dlog_C  = c(NA, diff(log_C)),
+    dlog_Cb = c(NA, diff(log_Cb)),
+    dlog_Cs = c(NA, diff(log_Cs)),
+    dlog_I  = c(NA, diff(log_I)),
+    dlog_G  = c(NA, diff(log_G))
+  )
+
+# Función para obtener ciclo Beveridge-Nelson bajo AR(1) en Δlog(X)
+bn_cycle_ar1 <- function(growth_series) {
+  temp <- data.frame(g = growth_series)
+  temp$g_lag <- dplyr::lag(temp$g)
+
+  temp_est <- na.omit(temp)
+
+  modelo <- lm(g ~ g_lag, data = temp_est)
+
+  alpha <- coef(modelo)[1]
+  phi   <- coef(modelo)[2]
+
+  mu <- alpha / (1 - phi)
+
+  ciclo <- rep(NA, length(growth_series))
+  ciclo[!is.na(growth_series)] <- - (phi / (1 - phi)) * (growth_series[!is.na(growth_series)] - mu)
+
+  return(ciclo)
+}
+
+# Obtener ciclos BN
+bn_Y  <- bn_cycle_ar1(df_bn$dlog_Y)
+bn_C  <- bn_cycle_ar1(df_bn$dlog_C)
+bn_Cb <- bn_cycle_ar1(df_bn$dlog_Cb)
+bn_Cs <- bn_cycle_ar1(df_bn$dlog_Cs)
+bn_I  <- bn_cycle_ar1(df_bn$dlog_I)
+bn_G  <- bn_cycle_ar1(df_bn$dlog_G)
+
+# Base con ciclos
+df_bn_cycle <- df_bn %>%
+  mutate(
+    bn_Y  = bn_Y,
+    bn_C  = bn_C,
+    bn_Cb = bn_Cb,
+    bn_Cs = bn_Cs,
+    bn_I  = bn_I,
+    bn_G  = bn_G
+  )
+
+# Formato largo
+df_bn_long <- df_bn_cycle %>%
+  select(Periodo, starts_with("bn_")) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+# Gráfica de componentes cíclicos
+ggplot(df_bn_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Componentes cíclicos (Beveridge-Nelson, aproximación AR(1) en Δlog)",
+    x = "Periodo",
+    y = "Ciclo"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+# Matriz de varianzas y covarianzas
+matriz_cov_bn <- df_bn_cycle %>%
+  select(starts_with("bn_")) %>%
+  na.omit() %>%
+  cov()
+
+matriz_cov_bn %>%
+  kable(
+    format = "html",
+    digits = 6,
+    align = "c",
+    caption = "Matriz de varianzas y covarianzas (componentes cíclicos, Beveridge-Nelson con AR(1) en Δlog)"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+\
+
+- Redacte una conclusión comparando estas distintas formas de eliminar la tendencia.
+
+En conjunto, los distintos métodos de eliminación de tendencia producen resultados cualitativamente consistentes, pero con diferencias importantes en la forma en que caracterizan el ciclo económico. Las tasas de crecimiento permiten una primera aproximación sencilla al componente cíclico, aunque conservan alta volatilidad y no separan explícitamente tendencia y ciclo. 
+El filtro de Hodrick-Prescott genera ciclos suaves y de fácil interpretación, pero depende del parámetro de suavizamiento y puede presentar problemas en los extremos de la muestra. 
+El filtro Band-Pass de Christiano-Fitzgerald aísla fluctuaciones en un rango específico de frecuencias, lo que permite identificar con mayor claridad las fases del ciclo económico, aunque su interpretación depende de la elección de los parámetros del rango. 
+Por su parte, la descomposición de Beveridge-Nelson ofrece una interpretación estructural al distinguir entre componentes permanentes y transitorios, pero su implementación depende de la correcta especificación del modelo dinámico. 
+En todos los casos se observa un comovimiento claro entre el producto y el consumo, así como una mayor volatilidad de la inversión, lo que confirma patrones robustos del ciclo económico. En términos prácticos, el filtro HP y el Band-Pass resultan más adecuados para el análisis descriptivo del ciclo, mientras que Beveridge-Nelson es más útil para interpretaciones estructurales.
+
+\
+
+## (d) Enfóquese ahora nada más a las distintas partes del consumo y al producto agregado. Grafique la relación entre cada una de las series del consumo y la del producto, es decir, grafique los puntos $(\%\Delta Y_t, \%\Delta C_t)$ poniendo el consumo en el eje x, para cada tipo de consumo.
+
+\
+
+```{r 3_d, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(ggplot2)
+library(dplyr)
+
+# Base con tasas de crecimiento (usar la de (c.1))
+df_d <- df_growth %>%
+  select(Periodo, g_Y, g_C, g_Cb, g_Cs)
+
+# Gráfica consumo total vs producto
+p1 <- ggplot(df_d, aes(x = g_C, y = g_Y)) +
+  geom_point(alpha = 0.6, color = "steelblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Relación entre crecimiento del consumo total y del producto",
+    x = "Crecimiento del consumo (C)",
+    y = "Crecimiento del producto (Y)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Gráfica consumo de bienes vs producto
+p2 <- ggplot(df_d, aes(x = g_Cb, y = g_Y)) +
+  geom_point(alpha = 0.6, color = "darkred") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Relación entre crecimiento del consumo de bienes y del producto",
+    x = "Crecimiento del consumo de bienes (Cb)",
+    y = "Crecimiento del producto (Y)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Gráfica consumo de servicios vs producto
+p3 <- ggplot(df_d, aes(x = g_Cs, y = g_Y)) +
+  geom_point(alpha = 0.6, color = "darkgreen") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Relación entre crecimiento del consumo de servicios y del producto",
+    x = "Crecimiento del consumo de servicios (Cs)",
+    y = "Crecimiento del producto (Y)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Imprimir
+p1
+p2
+p3
+
+```
+
+\
+
+## (e) Calcule la volatilidad de las tasas de crecimiento. ¿Qué es más volátil, el ingreso o el consumo agregado? ¿Cuál de los consumos es más volátil (servicos, durables, no durables)?
+
+\
+
+```{r 3_e, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(dplyr)
+library(knitr)
+library(kableExtra)
+
+# Calcular volatilidades (desviaciones estándar)
+volatilidades <- df_growth %>%
+  select(g_Y, g_C, g_Cb, g_Cs) %>%
+  na.omit() %>%
+  summarise(
+    Y  = sd(g_Y),
+    C  = sd(g_C),
+    Cb = sd(g_Cb),
+    Cs = sd(g_Cs)
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Variable",
+    values_to = "Volatilidad"
+  )
+
+# Mostrar tabla
+volatilidades %>%
+  kable(
+    format = "html",
+    digits = 6,
+    align = "c",
+    caption = "Volatilidad (desviación estándar) de las tasas de crecimiento"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+\
+
+La volatilidad de las tasas de crecimiento indica que el producto es más volátil que el consumo agregado, lo cual sugiere que el consumo presenta una trayectoria relativamente más estable a lo largo del ciclo económico. Al desagregar el consumo, se observa que el consumo de bienes es más volátil que el consumo de servicios, reflejando una mayor sensibilidad del gasto en bienes ante fluctuaciones del ingreso. En contraste, el consumo de servicios muestra un comportamiento más suave y persistente. Estos resultados son consistentes con la idea de que los hogares tienden a suavizar su consumo, especialmente en componentes menos ajustables como los servicios.
+
+\
+
+## (f) Para cada uno de los tipos de consumo, estime cuatro modelos lineales:\[C_t = a + bY_t + \varepsilon_t,\quad \Delta\% C_t = a + b\Delta\% Y_t + \varepsilon_t,\quad \Delta\% C_t = a + b\Delta\% Y_{t-1} + \varepsilon_t,\quad c_t = a + by_t + \varepsilon_t\], donde las minúsculas reflejan el logaritmo de la variable en mayúscula, y reporte los valores estimados de los coeficientes, los estadísticos T, las R cuadradas, etc.
+
+\
+
+```{r 3_f, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(dplyr)
+library(broom)
+library(knitr)
+library(kableExtra)
+
+# Base en niveles
+df_f <- df %>% arrange(Periodo)
+
+# Base de crecimiento
+df_g <- df_growth %>% arrange(Periodo)
+
+# Crear rezago de crecimiento del PIB
+df_g <- df_g %>%
+  mutate(g_Y_lag = lag(g_Y, 1))
+
+# Base logarítmica
+df_log_f <- df %>%
+  mutate(
+    log_Y  = log(Y),
+    log_C  = log(C),
+    log_Cb = log(Cb),
+    log_Cs = log(Cs)
+  )
+
+# ---------- MODELOS ----------
+
+# 1) Niveles
+m1_C  <- lm(C  ~ Y, data = df_f)
+m1_Cb <- lm(Cb ~ Y, data = df_f)
+m1_Cs <- lm(Cs ~ Y, data = df_f)
+
+# 2) Crecimiento contemporáneo
+m2_C  <- lm(g_C  ~ g_Y, data = df_g)
+m2_Cb <- lm(g_Cb ~ g_Y, data = df_g)
+m2_Cs <- lm(g_Cs ~ g_Y, data = df_g)
+
+# 3) Crecimiento rezagado
+m3_C  <- lm(g_C  ~ g_Y_lag, data = df_g)
+m3_Cb <- lm(g_Cb ~ g_Y_lag, data = df_g)
+m3_Cs <- lm(g_Cs ~ g_Y_lag, data = df_g)
+
+# 4) Log-log
+m4_C  <- lm(log_C  ~ log_Y, data = df_log_f)
+m4_Cb <- lm(log_Cb ~ log_Y, data = df_log_f)
+m4_Cs <- lm(log_Cs ~ log_Y, data = df_log_f)
+
+# Función para resumir modelos
+resumen_modelo <- function(modelo, nombre) {
+  tidy(modelo) %>%
+    mutate(Modelo = nombre)
+}
+
+# Unir resultados
+resultados <- bind_rows(
+  resumen_modelo(m1_C,  "C - Niveles"),
+  resumen_modelo(m2_C,  "C - Crec. contemporáneo"),
+  resumen_modelo(m3_C,  "C - Crec. rezagado"),
+  resumen_modelo(m4_C,  "C - Log-log"),
+
+  resumen_modelo(m1_Cb, "Cb - Niveles"),
+  resumen_modelo(m2_Cb, "Cb - Crec. contemporáneo"),
+  resumen_modelo(m3_Cb, "Cb - Crec. rezagado"),
+  resumen_modelo(m4_Cb, "Cb - Log-log"),
+
+  resumen_modelo(m1_Cs, "Cs - Niveles"),
+  resumen_modelo(m2_Cs, "Cs - Crec. contemporáneo"),
+  resumen_modelo(m3_Cs, "Cs - Crec. rezagado"),
+  resumen_modelo(m4_Cs, "Cs - Log-log")
+)
+
+# Mostrar tabla
+resultados %>%
+  select(Modelo, term, estimate, statistic, p.value) %>%
+  kable(
+    format = "html",
+    digits = 4,
+    align = "c",
+    caption = "Resultados de las estimaciones lineales"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+\
+
+## (g) Explique qué se podría concluir, si fuera el caso, a cerca de la Hipótesis de Ingreso Permanente para México a partir de los coeficientes encontrados.
+
+\
+
+Los resultados obtenidos son en gran medida consistentes con la Hipótesis de Ingreso Permanente. En primer lugar, el consumo agregado muestra una menor volatilidad que el ingreso, lo cual sugiere que los hogares suavizan su consumo frente a fluctuaciones del producto. En segundo lugar, la relación positiva y significativa entre el consumo y el ingreso en las distintas especificaciones confirma que el consumo responde al ingreso, aunque no de manera uno a uno en el corto plazo. En particular, en las regresiones en tasas de crecimiento, el coeficiente asociado al ingreso es menor que uno, lo que indica que el consumo reacciona parcialmente a variaciones contemporáneas del ingreso, consistente con la presencia de componentes transitorios. Asimismo, la menor relevancia del ingreso rezagado sugiere que los ajustes en el consumo ocurren principalmente en el mismo periodo. Finalmente, en la especificación log-log, la elasticidad cercana a la unidad indica que, en el largo plazo, el consumo crece proporcionalmente al ingreso, lo cual es coherente con la idea de que el ingreso permanente determina el nivel de consumo. En conjunto, estos resultados apoyan la validez empírica de la Hipótesis de Ingreso Permanente para el caso de México, aunque también sugieren la existencia de fricciones o restricciones que impiden un ajuste completamente suave en el corto plazo.
+
+\
+
+<h1 style="text-align: center;">Análisis comparativo del consumo agregado en México y Brasil</h1>
+
+\
+
+Con el fin de complementar el análisis del consumo agregado en México, se incorpora una comparación internacional con Brasil, correspondiente al equipo #1. Dado que los incisos (a)–(g) del ejercicio están formulados explícitamente para México, el análisis completo se realiza únicamente para dicho país, mientras que para Brasil se construye una comparación enfocada en las variables más homogéneas y comparables, particularmente el producto agregado y el consumo total. Para garantizar consistencia, se selecciona un horizonte temporal común de 2000 a 2025 con frecuencia trimestral, periodo para el cual ambas economías cuentan con información disponible de manera continua. Asimismo, aunque las series están expresadas en distintas unidades monetarias (millones de pesos a precios constantes de 2018 para México y millones de reales en valores encadenados para Brasil), esta diferencia no afecta el análisis, ya que las comparaciones se realizan en términos de logaritmos, tasas de crecimiento y medidas de volatilidad, las cuales son invariantes a la escala y unidades de medición. Debe indicarse que las series provienen de fuentes oficiales: para México, del INEGI, a partir de las cuentas nacionales trimestrales a precios constantes con año base 2018; y para Brasil, del IBGE, mediante el Sistema de Cuentas Nacionales Trimestrales (SCNT), usando valores encadenados en volumen. Bajo este enfoque, la comparación se centra en las trayectorias dinámicas, el comovimiento cíclico y la sensibilidad del consumo frente al ingreso en ambas economías, permitiendo evaluar la robustez de los resultados obtenidos para México en un contexto internacional sin necesidad de replicar exhaustivamente todos los procedimientos para el caso brasileño
+
+\
+
+## (h) Comparación gráfica de producto y consumo en México y Brasil
+
+\
+
+```{r 3_i, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(zoo)
+library(here)
+
+MB <- read_excel(here("Ejercicio3","BASES/Mexico-Brasil.xlsx"))
+
+df_comp <- MB %>%
+  mutate(
+    Periodo = as.yearqtr(Periodo, format = "%Y/%q")
+  )
+
+df_comp_long <- df_comp %>%
+  mutate(
+    log_CM = log(CM),
+    log_YM = log(YM),
+    log_CB = log(CB),
+    log_YB = log(YB)
+  ) %>%
+  select(Periodo, log_CM, log_YM, log_CB, log_YB) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
 # Gráfica en logaritmos
+
+ggplot(df_comp_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Producto y consumo en México y Brasil (logaritmos)",
+    x = "Periodo",
+    y = "Logaritmo"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Descripción:*
+\
 
-<!-- ============================================================ -->
+La gráfica comparativa mostrada se encuentra en logaritmos, permite comparar las trayectorias del producto y el consumo en México y Brasil sin que las diferencias de escala o de unidad monetaria distorsionen la interpretación. En ambos países se observa un comovimiento claro entre consumo y producto, así como una tendencia creciente de largo plazo, aunque con diferencias en la intensidad de sus fluctuaciones y en la dinámica de recuperación después de episodios de contracción.
 
-## Inciso (c): Series Filtradas / Cíclicas
+\
 
-### Tasas de Crecimiento $\Delta\%$
+## (i) Comparación de tasas de crecimiento
 
-> Construya $\Delta\%a_t = (a_t - a_{t-1})/a_{t-1}$ (cambios vs. año anterior).
-> Grafique y obtenga la matriz de varianzas y covarianzas.
+\
+```{r 3_j, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(zoo)
+library(here)
 
-```{r ex3c-growth}
-# Calcule tasas de crecimiento
-# Grafique
-# Matriz de varianzas-covarianzas
+MB <- read_excel(here("Ejercicio3","Mexico-Brasil.xlsx"))
+
+df_comp <- MB %>%
+  mutate(
+    Periodo = as.yearqtr(Periodo, format = "%Y/%q")
+  ) %>%
+  arrange(Periodo)
+
+# Tasas de crecimiento anual: t vs t-4
+df_growth_comp <- df_comp %>%
+  mutate(
+    g_YM = (YM - lag(YM, 4)) / lag(YM, 4),
+    g_CM = (CM - lag(CM, 4)) / lag(CM, 4),
+    g_YB = (YB - lag(YB, 4)) / lag(YB, 4),
+    g_CB = (CB - lag(CB, 4)) / lag(CB, 4)
+  )
+
+df_growth_comp_long <- df_growth_comp %>%
+  select(Periodo, g_YM, g_CM, g_YB, g_CB) %>%
+  pivot_longer(
+    cols = -Periodo,
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+
+# Gráfica de tasas de crecimiento
+ggplot(df_growth_comp_long, aes(x = Periodo, y = Valor, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Tasas de crecimiento anual del producto y consumo en México y Brasil",
+    x = "Periodo",
+    y = "Tasa de crecimiento"
+  ) +
+  scale_x_yearqtr(format = "%Y", n = 10) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
 ```
 
-*Conclusión parcial:*
+\
 
-### Filtro HP
+Las tasas de crecimiento anual presentadas en esta gráfica permiten comparar de manera directa la dinámica cíclica del producto y el consumo en México y Brasil. En ambas economías se observa un comovimiento claro entre consumo e ingreso, aunque con diferencias en la amplitud y persistencia de las fluctuaciones. Esta representación permite identificar con mayor claridad los episodios de desaceleración y recuperación, así como evaluar cuál de las dos economías presenta mayor volatilidad relativa en sus agregados principales.
 
-> Construya la versión filtrada HP (parte cíclica). Grafique y obtenga la
-> matriz de varianzas y covarianzas.
+\
 
-```{r ex3c-hp}
-# library(mFilter)
-# hp_result <- hpfilter(serie, freq = 1600)
-# ciclo_hp  <- hp_result$cycle
+## (j) Comparación de volatilidad
+
+\
+
+```{r 3_k, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(kableExtra)
+library(zoo)
+library(here)
+
+MB <- read_excel(here("Ejercicio3","Mexico-Brasil.xlsx"))
+
+df_comp <- MB %>%
+  mutate(
+    Periodo = as.yearqtr(Periodo, format = "%Y/%q")
+  ) %>%
+  arrange(Periodo)
+
+# Tasas de crecimiento anual: t vs t-4
+df_growth_comp <- df_comp %>%
+  mutate(
+    g_YM = (YM - lag(YM, 4)) / lag(YM, 4),
+    g_CM = (CM - lag(CM, 4)) / lag(CM, 4),
+    g_YB = (YB - lag(YB, 4)) / lag(YB, 4),
+    g_CB = (CB - lag(CB, 4)) / lag(CB, 4)
+  )
+
+# Tabla de volatilidades
+volatilidades_comp <- df_growth_comp %>%
+  select(g_YM, g_CM, g_YB, g_CB) %>%
+  na.omit() %>%
+  summarise(
+    `Producto México` = sd(g_YM),
+    `Consumo México` = sd(g_CM),
+    `Producto Brasil` = sd(g_YB),
+    `Consumo Brasil` = sd(g_CB)
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Variable",
+    values_to = "Volatilidad"
+  )
+
+volatilidades_comp %>%
+  kable(
+    format = "html",
+    digits = 6,
+    align = "c",
+    caption = "Volatilidad de las tasas de crecimiento del producto y el consumo en México y Brasil"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
 ```
 
-*Conclusión parcial:*
+La comparación de volatilidades permite evaluar qué tan sensibles son el producto y el consumo al ciclo económico en México y Brasil. En ambos países se espera que el consumo sea menos volátil que el producto, reflejando la presencia de suavización intertemporal. Al mismo tiempo, la comparación entre países permite identificar cuál economía exhibe mayores fluctuaciones agregadas y en cuál el consumo parece responder de manera más estable frente a variaciones del ingreso.
 
-### Filtro Band-Pass
+\
 
-> Construya la versión filtrada Band-Pass. Grafique y obtenga la matriz de
-> varianzas y covarianzas.
+## (k) Comparación de la relación consumo–producto
 
-```{r ex3c-bp}
-# library(mFilter)
-# bp_result <- bkfilter(serie)
-# ciclo_bp  <- bp_result$cycle
+\
+
+```{r 3_l, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(zoo)
+library(here)
+
+MB <- read_excel(here("Ejercicio3","Mexico-Brasil.xlsx"))
+
+df_comp <- MB %>%
+  mutate(
+    Periodo = as.yearqtr(Periodo, format = "%Y/%q")
+  ) %>%
+  arrange(Periodo)
+
+# Tasas de crecimiento anual
+df_growth_comp <- df_comp %>%
+  mutate(
+    g_YM = (YM - lag(YM, 4)) / lag(YM, 4),
+    g_CM = (CM - lag(CM, 4)) / lag(CM, 4),
+    g_YB = (YB - lag(YB, 4)) / lag(YB, 4),
+    g_CB = (CB - lag(CB, 4)) / lag(CB, 4)
+  )
+
+# Base limpia
+df_scatter <- df_growth_comp %>%
+  select(g_YM, g_CM, g_YB, g_CB) %>%
+  na.omit()
+
+# México
+p_mex <- ggplot(df_scatter, aes(x = g_CM, y = g_YM)) +
+  geom_point(alpha = 0.6, color = "steelblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "México: crecimiento del consumo vs producto",
+    x = "Crecimiento del consumo (CM)",
+    y = "Crecimiento del producto (YM)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Brasil
+p_bra <- ggplot(df_scatter, aes(x = g_CB, y = g_YB)) +
+  geom_point(alpha = 0.6, color = "darkred") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Brasil: crecimiento del consumo vs producto",
+    x = "Crecimiento del consumo (CB)",
+    y = "Crecimiento del producto (YB)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Mostrar
+p_mex
+p_bra
+
 ```
 
-*Conclusión parcial:*
+La relación observada entre el crecimiento del consumo y el crecimiento del producto es positiva en ambos países, lo que confirma el carácter procíclico del consumo. No obstante, se observan diferencias en la dispersión de los datos, lo que sugiere que la intensidad de esta relación varía entre México y Brasil. En particular, una menor dispersión indicaría una relación más estrecha entre consumo e ingreso, mientras que una mayor dispersión refleja una respuesta más heterogénea del consumo frente a fluctuaciones del producto.
 
-### Filtro Beveridge-Nelson
+\
 
-> Construya la versión filtrada Beveridge-Nelson. Grafique y obtenga la matriz
-> de varianzas y covarianzas.
+## (l) Regresión comparable para México y Brasil
 
-```{r ex3c-bn}
-# Implementación del filtro Beveridge-Nelson
+\
+
+```{r 3_m, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+library(readxl)
+library(dplyr)
+library(broom)
+library(knitr)
+library(kableExtra)
+library(zoo)
+library(here)
+
+
+MB <- read_excel(here("Ejercicio3","Mexico-Brasil.xlsx"))
+
+df_comp <- MB %>%
+  mutate(
+    Periodo = as.yearqtr(Periodo, format = "%Y/%q")
+  ) %>%
+  arrange(Periodo)
+
+# Tasas de crecimiento anual
+df_growth_comp <- df_comp %>%
+  mutate(
+    g_YM = (YM - lag(YM, 4)) / lag(YM, 4),
+    g_CM = (CM - lag(CM, 4)) / lag(CM, 4),
+    g_YB = (YB - lag(YB, 4)) / lag(YB, 4),
+    g_CB = (CB - lag(CB, 4)) / lag(CB, 4)
+  ) %>%
+  na.omit()
+
+# Regresiones
+reg_mex <- lm(g_CM ~ g_YM, data = df_growth_comp)
+reg_bra <- lm(g_CB ~ g_YB, data = df_growth_comp)
+
+# Resumen de resultados
+res_mex <- tidy(reg_mex) %>%
+  mutate(Pais = "México")
+
+res_bra <- tidy(reg_bra) %>%
+  mutate(Pais = "Brasil")
+
+resultados_reg <- bind_rows(res_mex, res_bra)
+
+# Mostrar tabla
+resultados_reg %>%
+  select(Pais, term, estimate, statistic, p.value) %>%
+  kable(
+    format = "html",
+    digits = 4,
+    align = "c",
+    caption = "Regresión del crecimiento del consumo sobre el crecimiento del producto: México vs Brasil"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "center")
 ```
 
-*Conclusión parcial:*
+Los resultados de las regresiones muestran una relación positiva y estadísticamente significativa entre el crecimiento del consumo y el crecimiento del producto en ambos países, confirmando el carácter procíclico del consumo. No obstante, la magnitud del coeficiente permite comparar la sensibilidad del consumo frente al ingreso: un coeficiente mayor indica una respuesta más fuerte del consumo ante variaciones del producto, mientras que un coeficiente menor sugiere una mayor suavización. Estas diferencias permiten evaluar en cuál de las dos economías el consumo se ajusta más estrechamente al ciclo económico.
 
-### Conclusión Comparativa de Filtros
+\
 
-*Redacte aquí una conclusión comparando las distintas formas de eliminar la tendencia:*
+## (m) Conclusión comparativa
 
-<!-- ============================================================ -->
+\
+La evidencia comparativa entre México y Brasil confirma que el consumo es procíclico en ambas economías y que tiende a presentar menor volatilidad que el producto, consistente con la hipótesis de suavización del consumo. No obstante, las diferencias en la magnitud de las fluctuaciones y en la sensibilidad del consumo frente al ingreso sugieren que el grado de ajuste intertemporal varía entre países. En particular, una menor respuesta del consumo ante cambios en el ingreso es indicativa de una mayor capacidad de suavización, mientras que una respuesta más fuerte refleja una mayor dependencia del ingreso corriente. En este sentido, los resultados permiten concluir que, aunque los patrones generales son consistentes con la hipótesis de ingreso permanente, existen diferencias estructurales entre ambas economías que afectan la forma en que los hogares enfrentan las fluctuaciones del ciclo económico.
 
-## Inciso (d): Consumo vs. Producto
+\
 
-> Grafique la relación $(\Delta\%Y_t,\; \Delta\%C_t)$ para cada tipo de consumo
-> (consumo total, servicios, bienes).
-
-```{r ex3d}
-# Gráficas de dispersión: consumo en eje x, producto en eje y
-```
-
-*Descripción:*
-
-<!-- ============================================================ -->
-
-## Inciso (e): Volatilidad de las Tasas de Crecimiento
-
-> ¿Qué es más volátil, el ingreso o el consumo agregado? ¿Cuál de los consumos
-> es más volátil (servicios, durables, no durables)?
-
-```{r ex3e}
-# Calcule desviaciones estándar de las tasas de crecimiento
-```
-
-*Respuesta:*
-
-<!-- ============================================================ -->
-
-## Inciso (f): Estimación de Modelos Lineales
-
-> Para cada tipo de consumo, estime los cuatro modelos lineales:
-> 1. $C_t = a + bY_t + \epsilon_t$
-> 2. $\Delta\%C_t = a + b\Delta\%Y_t + \epsilon_t$
-> 3. $\Delta\%C_t = a + b\Delta\%Y_{t-1} + \epsilon_t$
-> 4. $c_t = a + by_t + \epsilon_t$ (minúsculas = logaritmos)
-
-```{r ex3f-total}
-# Modelo 1: Niveles
-# Modelo 2: Tasas de crecimiento contemporáneas
-# Modelo 3: Tasas de crecimiento rezagadas
-# Modelo 4: Log-log
-```
-
-```{r ex3f-servicios}
-# Repita para consumo de servicios
-```
-
-```{r ex3f-bienes}
-# Repita para consumo de bienes
-```
-
-*Tabla de resultados (coeficientes, estadísticos-t, $R^2$):*
-
-<!-- ============================================================ -->
-
-## Inciso (g): Hipótesis de Ingreso Permanente para México
-
-> Explique qué se podría concluir sobre la Hipótesis de Ingreso Permanente (HIP)
-> para México a partir de los coeficientes encontrados.
-
-*Conclusión:*
 
 ---
 
@@ -886,66 +1951,82 @@ ggplot(df_i, aes(x = sigma_eps, y = beta_hat)) +
 
 ---
 
-# Ejercicio 8: Valuación de Opciones — Árbol Binomial
+# 8. Finalmente, utilice el método del árbol binomial en dos etapas para, primero, explicar el precio P = 200 de un activo y, después, valuar un "call" sobre dicho activo, con precio de ejercicio K = P − N ∗ 5 donde N es el número de su equipo, (Eq. 1: use N=1, Eq. 2: use N=2, etc) asumiendo una tasa de interés de 5 por ciento: [1 horas, 2 puntos]
 
-> **Instrucciones:** Use el método del árbol binomial en **dos etapas** para
-> explicar el precio $P = 200$ de un activo y valuar un *call* sobre dicho
-> activo con precio de ejercicio $K = P - N \times 5$, donde $N$ es el número
-> de equipo, asumiendo una tasa de interés del 5%.
-> *(1 hora, 2 puntos)*
+```{r 8, message=FALSE, warning=FALSE, echo=FALSE} 
+# Parámetros del problema
+S0 <- 200
+N  <- 1
+K  <- S0 - N*5
+r  <- 0.05
 
-```{r ex8-params}
-P   <- 200     # Precio actual del activo
-N   <- 1       # Número de equipo — ajuste según corresponda
-K   <- P - N * 5  # Precio de ejercicio del call
-r   <- 0.05    # Tasa de interés
+# Supuestos del árbol binomial
+# Sustituir estos valores por los que indique el ejercicio o por los que acuerde el equipo
+u <- 1.20
+d <- 0.90
+
+# Verificación básica de no arbitraje
+if (!(d < 1 + r && 1 + r < u)) {
+  stop("No se cumple la condición de no arbitraje: d < 1+r < u")
+}
+
+# Probabilidad neutral al riesgo
+q <- (1 + r - d) / (u - d)
+
+# Precios del activo en el árbol
+Suu <- S0 * u^2
+Sud <- S0 * u * d
+Sdd <- S0 * d^2
+
+# Pagos del call en t=2
+Cuu <- max(Suu - K, 0)
+Cud <- max(Sud - K, 0)
+Cdd <- max(Sdd - K, 0)
+
+# Valuación hacia atrás
+Cu <- (q * Cuu + (1 - q) * Cud) / (1 + r)
+Cd <- (q * Cud + (1 - q) * Cdd) / (1 + r)
+
+C0 <- (q * Cu + (1 - q) * Cd) / (1 + r)
+
+# Resultados
+cat("Precio inicial del activo S0 =", S0, "\n")
+cat("Precio de ejercicio K =", K, "\n")
+cat("Tasa libre de riesgo r =", r, "\n")
+cat("Factor de subida u =", u, "\n")
+cat("Factor de bajada d =", d, "\n")
+cat("Probabilidad neutral al riesgo q =", round(q, 6), "\n\n")
+
+cat("Precios terminales del activo:\n")
+cat("Suu =", round(Suu, 4), "\n")
+cat("Sud =", round(Sud, 4), "\n")
+cat("Sdd =", round(Sdd, 4), "\n\n")
+
+cat("Pagos terminales del call:\n")
+cat("Cuu =", round(Cuu, 4), "\n")
+cat("Cud =", round(Cud, 4), "\n")
+cat("Cdd =", round(Cdd, 4), "\n\n")
+
+cat("Valores intermedios del call:\n")
+cat("Cu =", round(Cu, 4), "\n")
+cat("Cd =", round(Cd, 4), "\n\n")
+
+cat("Valor inicial del call C0 =", round(C0, 4), "\n")
+
+
 ```
 
-## Árbol Binomial: Precio del Activo
+A partir de la construcción de un árbol binomial de dos etapas, se modeló la evolución del precio de un activo con valor inicial $S_0 = 200$, considerando movimientos de subida y bajada determinados por los factores $u = 1.20$ y $d = 0.90$. Para el equipo 1, se estableció un precio de ejercicio de $K = 195$ y una tasa libre de riesgo de $r = 0.05$.
 
-> Construya y explique el árbol binomial de dos etapas para el activo.
+Con estos supuestos, se obtuvo una probabilidad neutral al riesgo de $q = 0.50$, lo que refleja una estructura consistente con ausencia de arbitraje. Los precios del activo en los nodos terminales fueron $288$, $216$ y $162$, generando pagos de la opción call de $93$, $21$ y $0$, respectivamente.
 
-```{r ex8-arbol}
-# Defina los factores u (subida) y d (bajada)
-# u <- ...
-# d <- ...
-# dt <- ...  # longitud de cada período
-
-# Construya el árbol de precios
-# Etapa 0: S_0 = P
-# Etapa 1: S_u = P*u, S_d = P*d
-# Etapa 2: S_uu = P*u^2, S_ud = P*u*d, S_dd = P*d^2
-
-# Calcule las probabilidades neutrales al riesgo
-# p <- (exp(r*dt) - d) / (u - d)
-```
-
-*Descripción del árbol y calibración de parámetros:*
+Aplicando el procedimiento de valuación hacia atrás, se obtuvieron valores intermedios de la opción de $C_u = 54.29$ y $C_d = 10.00$. Finalmente, el valor presente de la opción call es:
 
 $$
-% Árbol binomial — inserte diagrama en LaTeX si lo desea
+C_0 \approx 30.61.
 $$
 
-<!-- ============================================================ -->
-
-## Valuación del Call Europeo
-
-> Calcule el precio del *call* con precio de ejercicio $K = `r K`$.
-
-```{r ex8-call}
-# Payoffs en la etapa final
-# C_uu <- max(S_uu - K, 0)
-# C_ud <- max(S_ud - K, 0)
-# C_dd <- max(S_dd - K, 0)
-
-# Retroceso (backward induction)
-# C_u  <- exp(-r*dt) * (p * C_uu + (1-p) * C_ud)
-# C_d  <- exp(-r*dt) * (p * C_ud + (1-p) * C_dd)
-# C_0  <- exp(-r*dt) * (p * C_u  + (1-p) * C_d)
-# cat("Precio del call:", C_0)
-```
-
-*Interpretación del resultado:*
+Este resultado indica que la opción posee un valor positivo relevante, dado que existe una probabilidad significativa de que el activo supere el precio de ejercicio en estados favorables. 
 
 ---
 
