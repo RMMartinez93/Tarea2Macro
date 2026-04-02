@@ -184,7 +184,7 @@ if (is.null(fredr_get_key()) || fredr_get_key() == "") {
 
 ## Función auxiliar: retorno anual desde datos diarios/mensuales
 
-```{r ex7-utils}
+```{r ex7-utils, echo=FALSE}
 # Dado un tibble con columnas 'date' y 'value' (precios diarios o mensuales),
 # extrae el último valor del año (cierre de diciembre) y calcula retornos.
 annual_close <- function(df) {
@@ -250,7 +250,7 @@ add_cooks <- function(df) {
 
 ## Descarga: índices bursátiles vía FRED
 
-```{r ex7-indices-fred}
+```{r ex7-indices-fred, echo=FALSE}
 # ── NASDAQ Composite (NASDAQCOM) ─────────────────────────────────────────────
 # Fuente: Nasdaq, Inc. / FRED — datos diarios desde 1971
 nasdaq_daily <- fredr(
@@ -277,7 +277,7 @@ cat("Nikkei: años disponibles:", min(nikkei_annual$year), "–", max(nikkei_ann
 
 ## IPC (S&P/BMV) — datos hardcoded con fuente verificada
 
-```{r ex7-ipc}
+```{r ex7-ipc, echo=FALSE}
 # Fuente: Yahoo Finance (^MXX) / Bolsa Mexicana de Valores
 # Precio de cierre del último día hábil de diciembre de cada año.
 # No existe serie histórica completa (desde 1990) en ninguna API abierta.
@@ -295,7 +295,7 @@ ipc_annual <- tibble(
 
 ## Retornos nominales anuales
 
-```{r ex7-retornos}
+```{r ex7-retornos, echo=FALSE}
 # calc_returns_df devuelve year + retorno; los renombramos de inmediato
 # y descartamos 'value' para que el join posterior sea limpio
 make_returns <- function(df_annual, col_name) {
@@ -319,7 +319,7 @@ cat("Período de retornos:", min(yrs_ret), "–", max(yrs_ret), "\n")
 
 ### EE.UU. — DGS1 (FRED)
 
-```{r ex7-rf-usa}
+```{r ex7-rf-usa, echo=FALSE}
 # Fuente: Federal Reserve H.15 / FRED serie DGS1
 # 1-Year Treasury Constant Maturity Rate, promedio anual
 dgs1_raw <- fredr(
@@ -334,7 +334,7 @@ cat("DGS1: años disponibles:", min(rf_usa_annual$year), "–", max(rf_usa_annua
 
 ### Japón — call rate (FRED)
 
-```{r ex7-rf-jpn}
+```{r ex7-rf-jpn, echo=FALSE}
 # Fuente: OECD / FRED serie IRSTCI01JPM156N
 # Interest Rates: Immediate Rates (< 24 h): Call Money/Interbank Rate
 # Es el proxy estándar para la tasa libre de riesgo a corto plazo en Japón
@@ -351,7 +351,7 @@ cat("JPN call rate: años disponibles:", min(rf_jpn_annual$year), "–", max(rf_
 
 ### México — CETES 28 días (Banxico SIE API)
 
-```{r ex7-rf-mex}
+```{r ex7-rf-mex, echo=FALSE}
 # Fuente: Banco de México, SIE — serie SF60633 (CETES 28 días, tasa primaria)
 # API pública, sin autenticación requerida
 banxico_url <- paste0(
@@ -398,7 +398,7 @@ cat("CETES: años disponibles:", min(rf_mex_annual$year), "–", max(rf_mex_annu
 
 ## Descarga: consumo privado real — World Bank WDI
 
-```{r ex7-consumo-wdi}
+```{r ex7-consumo-wdi, echo=FALSE}
 # Indicador NE.CON.PRVT.KD.ZG:
 # "Final consumption expenditure, etc. (annual % growth)"
 # Fuente: World Bank WDI — paquete WDI (CRAN)
@@ -428,7 +428,7 @@ cat("Consumo WDI — México:", length(gc_mex_wdi), "obs  |",
 
 ## Consumo México desagregado — INEGI IMCP (descarga automática)
 
-```{r ex7-consumo-inegi}
+```{r ex7-consumo-inegi, echo=FALSE}
 # Fuente: INEGI, Indicador Mensual del Consumo Privado (IMCP)
 # Datos abiertos: https://www.inegi.org.mx/programas/imcp/2018/
 # El ZIP contiene series originales (índices base 2018=100) y
@@ -501,7 +501,7 @@ cat("Consumo importado — IMCP:", length(gc_mex_imp),
 
 ## Construcción del panel integrado
 
-```{r ex7-panel}
+```{r ex7-panel, echo=FALSE}
 # Alinear todas las series al período de retornos (1991–2024)
 yrs_chr <- as.character(yrs_ret)
 
@@ -560,7 +560,7 @@ cat("NAs en prima_IPC:", sum(is.na(df_prima$prima_IPC)),
 > Consiga los valores anuales del IPC (BMV), el NASDAQ y el Nikkei 225 (Japón)
 > por lo menos desde 1990.
 
-```{r ex7a}
+```{r ex7a, echo=FALSE}
 # Combinar precios anuales de cierre
 df_precios <- bind_rows(
   ipc_annual    |> mutate(indice = "IPC"),
@@ -608,7 +608,7 @@ Nikkei Inc./FRED (`NIKKEI225`) para Nikkei 225.*
 > Calcule la tasa de retorno nominal anual para cada índice:
 > $r_t = (P_t - P_{t-1})/P_{t-1}$
 
-```{r ex7b}
+```{r ex7b, echo=FALSE}
 df_ret_long <- df_ret |>
   pivot_longer(-year, names_to = "indice", values_to = "retorno")
 
@@ -654,7 +654,7 @@ y el de menor volatilidad es
 > Obtenga los valores promedio anual de la tasa de interés a un año para
 > México, EE.UU. y Japón.
 
-```{r ex7c}
+```{r ex7c, echo=FALSE}
 df_rf <- tibble(
   year   = yrs_ret,
   Mexico = as.numeric(rf_mex_s),
@@ -705,7 +705,7 @@ FRED serie `DGS1`. Call rate Japón: FRED serie `IRSTCI01JPM156N` (OECD).
 > Por lo tanto, la prima calculada abajo coincide con la prima nominal en
 > diferencias, pero su nivel se interpreta como prima real neta de inflación.
 
-```{r ex7d}
+```{r ex7d, echo=FALSE}
 df_prima_long <- df_prima |>
   select(year, prima_IPC, prima_NASDAQ, prima_Nikkei) |>
   pivot_longer(-year, names_to = "serie", values_to = "prima") |>
@@ -794,7 +794,7 @@ el consumo local deja de ser el estadístico apropiado para estimar $\gamma$.
 > Consumo: World Bank WDI, indicador `NE.CON.PRVT.KD.ZG` (crecimiento anual
 > real del consumo privado).
 
-```{r ex7e}
+```{r ex7e, echo=FALSE}
 # ── Covarianzas (guardadas para incisos posteriores) ──────────────────────────
 cov_ipc_e    <- cov(df_prima$prima_IPC,    as.numeric(gc_mex_s), use = "complete.obs")
 cov_nasdaq_e <- cov(df_prima$prima_NASDAQ, as.numeric(gc_usa_s), use = "complete.obs")
@@ -875,7 +875,7 @@ Una discrepancia grande entre $r$ de Pearson y $\rho$ de Spearman indica que el 
 > `Real Durable Goods Index` y `Real Services Index` (base 2015=100, mensual
 > desde 2003). Variación % anual calculada desde el promedio anual del índice.
 
-```{r ex7f-data}
+```{r ex7f-data, echo=FALSE}
 # ── EE.UU.: durables y servicios reales (BEA vía FRED) ───────────────────────
 # PCEDGC96: Real PCE Durable Goods (chained 2017 USD, mensual)
 # PCESC96:  Real PCE Services      (chained 2017 USD, mensual)
@@ -987,7 +987,7 @@ safe_cor <- function(x, y) {
 }
 ```
 
-```{r ex7f}
+```{r ex7f, echo=FALSE}
 # ── Tabla resumen de covarianzas ──────────────────────────────────────────────
 primas_f <- list(
   df_prima$prima_IPC,    df_prima$prima_IPC,
@@ -1105,7 +1105,7 @@ En Japón, `r round(cov_dur_jpn, 2)` (durables) y `r round(cov_serv_jpn, 2)` (se
 > Para recuperar el valor correcto se aplica:
 > $$\hat{\gamma} = 100 \cdot \frac{E_{\%}[r^m - r^f]}{\text{Cov}_{\%^2}(r^m - r^f,\;\Delta c)}$$
 
-```{r ex7g}
+```{r ex7g, echo=FALSE}
 E_prima_ipc    <- mean(df_prima$prima_IPC,    na.rm = TRUE)
 E_prima_nasdaq <- mean(df_prima$prima_NASDAQ, na.rm = TRUE)
 E_prima_nikkei <- mean(df_prima$prima_Nikkei, na.rm = TRUE)
@@ -1152,7 +1152,7 @@ literatura es entre `r gamma_min` y `r gamma_max` (Arrow 1971; Hansen y Singleto
 
 ### Resultado suplementario: S&P 500 (índice canónico para el EPP)
 
-```{r ex7g-sp500}
+```{r ex7g-sp500, echo=FALSE}
 # El índice apropiado para el EPP de Mehra-Prescott es un índice de mercado amplio.
 # Descargamos S&P 500 (FRED: SP500) para mostrar el resultado canónico.
 sp500_daily <- fredr(
@@ -1206,7 +1206,7 @@ explicar esta prima, ilustrando con claridad el acertijo.
 
 ### Análisis de sensibilidad: estabilidad de $\hat{\gamma}$ por sub-período
 
-```{r ex7g-sens}
+```{r ex7g-sens, echo=FALSE}
 # Sub-períodos: muestra completa y exclusiones de episodios extremos documentados
 periodos <- list(
   "Completo (1991–2024)"                      = 1991:2024,
@@ -1274,7 +1274,7 @@ resultado, no la tendencia central. En particular:
 >
 > Fuente: INEGI IMCP, datos abiertos (descarga automática).
 
-```{r ex7h}
+```{r ex7h, echo=FALSE}
 cov_imp  <- cov(df_prima$prima_IPC, as.numeric(gc_imp_s), use = "complete.obs")
 cor_imp  <- cor(df_prima$prima_IPC, as.numeric(gc_imp_s), use = "complete.obs")
 rho_imp  <- safe_spearman(df_prima$prima_IPC, as.numeric(gc_imp_s))
@@ -1327,7 +1327,7 @@ el de Spearman es `r round(pval_imp_spearman, 3)`
 
 # Inciso (i): Aversión al Riesgo con Consumo Importado
 
-```{r ex7i}
+```{r ex7i, echo=FALSE}
 # Misma corrección de unidades que en inciso (g): multiplicar por 100
 gamma_imp <- 100 * E_prima_ipc / cov_imp
 
@@ -1494,5 +1494,24 @@ a aumentar la covarianza con la prima y reducir $\hat{\gamma}$, atenuando
 parcialmente el acertijo. Pero en ningún caso los datos llevan a $\gamma$
 dentro del rango microeconómicamente plausible de 1–5, confirmando que el
 acertijo persiste con datos contemporáneos para el índice apropiado.
+
+Una perspectiva estadística adicional unifica varios de los resultados
+anteriores: dado que las correlaciones entre la prima de riesgo y el
+crecimiento del consumo son en su mayoría **estadísticamente
+indistinguibles de cero** con $n \approx 34$ observaciones (ver p-values
+en los incisos e, f y h), el denominador $\widehat{\text{Cov}}$ en
+$\hat{\gamma} = 100 \cdot E[\text{prima}] / \widehat{\text{Cov}}$ es
+en la práctica ruido estadístico. En esas circunstancias, la magnitud y
+el signo de $\hat{\gamma}$ —y por tanto la discusión sobre si sube o
+baja al cambiar la medida de consumo— carecen de sustento inferencial:
+estamos dividiendo entre una cantidad que no podemos distinguir de cero,
+por lo que cualquier diferencia entre estimaciones es igualmente
+consistente con el azar. Esto no invalida el acertijo como fenómeno
+teórico; sí indica que con datos anuales de 34 años la potencia
+estadística es insuficiente para estimar $\gamma$ de forma confiable
+mediante esta vía. El resultado del S&P 500 es la excepción más robusta:
+su covarianza con el consumo es la mayor en valor absoluto y, cuando
+resulta significativa, produce un $\hat{\gamma}$ elevado y positivo
+consistente con la literatura.
 
 ---

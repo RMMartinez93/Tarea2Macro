@@ -11,6 +11,7 @@ output:
 header-includes:
   - \usepackage{amsmath}
   - \usepackage{booktabs}
+  - \usepackage{longtable}
   - \usepackage{float}
   - \usepackage{geometry}
   - \geometry{margin=1in}
@@ -629,7 +630,7 @@ df <- Y %>%
 
 df %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 2,
     align = "c",
     caption = "Tabla 1. Variables macroeconómicas a precios constantes (base 2018)",
@@ -788,7 +789,7 @@ matriz_cov_growth <- df_growth %>%
 
 matriz_cov_growth %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 6,
     align = "c",
     caption = "Matriz de varianzas y covarianzas de las tasas de crecimiento anual"
@@ -855,7 +856,7 @@ df_hp_long <- df_hp_cycle %>%
 ggplot(df_hp_long, aes(x = Periodo, y = Valor, color = Variable)) +
   geom_line(size = 1) +
   labs(
-    title = "Componentes cíclicos (filtro HP, λ = 1600)",
+    title = expression(paste("Componentes c\u00edclicos (filtro HP, ", lambda, " = 1600)")),
     x = "Periodo",
     y = "Ciclo"
   ) +
@@ -873,7 +874,7 @@ matriz_cov_hp <- df_hp_cycle %>%
 
 matriz_cov_hp %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 6,
     align = "c",
     caption = "Matriz de varianzas y covarianzas (componentes cíclicos, filtro HP)"
@@ -956,7 +957,7 @@ matriz_cov_bp <- df_bp_cycle %>%
 
 matriz_cov_bp %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 6,
     align = "c",
     caption = "Matriz de varianzas y covarianzas (componentes cíclicos, filtro Band-Pass Christiano-Fitzgerald)"
@@ -1046,7 +1047,7 @@ df_bn_long <- df_bn_cycle %>%
 ggplot(df_bn_long, aes(x = Periodo, y = Valor, color = Variable)) +
   geom_line(size = 1) +
   labs(
-    title = "Componentes cíclicos (Beveridge-Nelson, aproximación AR(1) en Δlog)",
+    title = expression(paste("Componentes c\u00edclicos (Beveridge-Nelson, aproximaci\u00f3n AR(1) en ", Delta, "log)")),
     x = "Periodo",
     y = "Ciclo"
   ) +
@@ -1064,10 +1065,10 @@ matriz_cov_bn <- df_bn_cycle %>%
 
 matriz_cov_bn %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 6,
     align = "c",
-    caption = "Matriz de varianzas y covarianzas (componentes cíclicos, Beveridge-Nelson con AR(1) en Δlog)"
+    caption = "Matriz de varianzas y covarianzas (componentes c\\'{i}clicos, Beveridge-Nelson con AR(1) en $\\Delta$log)"
   ) %>%
   kable_styling(full_width = FALSE, position = "center")
 ```
@@ -1169,7 +1170,7 @@ volatilidades <- df_growth %>%
 # Mostrar tabla
 volatilidades %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 6,
     align = "c",
     caption = "Volatilidad (desviación estándar) de las tasas de crecimiento"
@@ -1262,7 +1263,7 @@ resultados <- bind_rows(
 resultados %>%
   select(Modelo, term, estimate, statistic, p.value) %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 4,
     align = "c",
     caption = "Resultados de las estimaciones lineales"
@@ -1300,7 +1301,7 @@ library(ggplot2)
 library(zoo)
 library(here)
 
-MB <- read_excel(here("Ejercicio3","BASES/Mexico-Brasil.xlsx"))
+MB <- read_excel(here("Ejercicio3","Mexico-Brasil.xlsx"))
 
 df_comp <- MB %>%
   mutate(
@@ -1448,7 +1449,7 @@ volatilidades_comp <- df_growth_comp %>%
 
 volatilidades_comp %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 6,
     align = "c",
     caption = "Volatilidad de las tasas de crecimiento del producto y el consumo en México y Brasil"
@@ -1576,7 +1577,7 @@ resultados_reg <- bind_rows(res_mex, res_bra)
 resultados_reg %>%
   select(Pais, term, estimate, statistic, p.value) %>%
   kable(
-    format = "html",
+    format = "latex",
     digits = 4,
     align = "c",
     caption = "Regresión del crecimiento del consumo sobre el crecimiento del producto: México vs Brasil"
