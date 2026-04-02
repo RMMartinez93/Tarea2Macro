@@ -611,8 +611,6 @@ for (i in 1:n_personas) {
 ```
 
 ```{r grafica-inciso-a, fig.width=8, fig.height=5,  echo=FALSE, fig.align='center'}
-library(ggplot2)
-
 # Data frame
 df_P <- data.frame(
   persona = 1:n_personas,
@@ -628,10 +626,7 @@ ggplot(df_P, aes(x = persona, y = ingreso_permanente)) +
     x = "Persona",
     y = "Ingreso permanente"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  theme_epp()
 ```
 
 \
@@ -668,10 +663,8 @@ ggplot(df_T, aes(x = periodo, y = ingreso_transitorio, group = persona, color = 
     y = expression(Y[i,t]^T),
     color = "Persona"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  ) +
+  scale_color_manual(values = pal_20, guide = "none") +
+  theme_epp() +
   guides(
     color = guide_legend(ncol = 2)
   )
@@ -704,10 +697,8 @@ ggplot(df_Y, aes(x = periodo, y = ingreso_total, group = persona, color = factor
     y = expression(Y[i,t]),
     color = "Persona"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  ) +
+  scale_color_manual(values = pal_20, guide = "none") +
+  theme_epp() +
   guides(
     color = guide_legend(ncol = 2)
   )
@@ -744,10 +735,8 @@ ggplot(df_e, aes(x = periodo, y = error_medicion, group = persona, color = facto
     y = expression(epsilon[i,t]),
     color = "Persona"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  ) +
+  scale_color_manual(values = pal_20, guide = "none") +
+  theme_epp() +
   guides(
     color = guide_legend(ncol = 2)
   )
@@ -778,10 +767,8 @@ ggplot(df_C, aes(x = periodo, y = consumo, group = persona, color = factor(perso
     y = expression(C[i,t]),
     color = "Persona"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  ) +
+  scale_color_manual(values = pal_20, guide = "none") +
+  theme_epp() +
   guides(
     color = guide_legend(ncol = 2)
   )
@@ -816,16 +803,13 @@ beta_hat
 
 ggplot(df_reg, aes(x = Y, y = C)) +
   geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[2]) +
   labs(
     title = "Relación entre ingreso total y consumo",
     x = expression(Y[i,t]),
     y = expression(C[i,t])
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  theme_epp()
 ```
 
 Se estimó mediante mínimos cuadrados ordinarios la relación lineal entre el consumo y el ingreso total, de acuerdo con la especificación $C_{i,t}= α + βY_{i,t} + ϵ_{i,t}$. Los resultados muestran una relación positiva entre ambas variables, lo que indica que mayores niveles de ingreso total se asocian con mayores niveles de consumo.
@@ -894,10 +878,7 @@ df_g <- data.frame(
 ggplot(df_g, aes(x = sigma2_P, y = beta_hat)) +
   geom_point() +
   geom_line() +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  theme_epp()
 ```
 
 La gráfica muestra una relación positiva entre la varianza del ingreso permanente $\sigma^P$ y la pendiente estimada $\hat{\beta}$. A medida que aumenta $\sigma^P$, una mayor proporción de la variación del ingreso total proviene del componente permanente, al cual el consumo responde completamente. Por ello, la estimación de $\hat{\beta}$ tiende a incrementarse y acercarse a uno, reflejando una relación más estrecha entre el ingreso total y el consumo.
@@ -986,10 +967,7 @@ ggplot(df_h, aes(x = sigma2_T, y = beta_hat)) +
     x = expression(sigma^T),
     y = expression(hat(beta))
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  theme_epp()
 ```
 
 La gráfica muestra una relación negativa entre la varianza del ingreso transitorio $\sigma^T$ y la pendiente estimada $\hat{\beta}$. A medida que aumenta $\sigma^T$, una mayor proporción de la variación del ingreso total proviene del componente transitorio, al cual el consumo responde solo parcialmente. En consecuencia, la estimación de $\hat{\beta}$ tiende a disminuir, acercándose al coeficiente asociado al ingreso transitorio, que en este caso es 0.1.
@@ -1079,10 +1057,7 @@ ggplot(df_i, aes(x = sigma2_e, y = beta_hat)) +
     x = expression(sigma^{epsilon}),
     y = expression(hat(beta))
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  theme_epp()
   
 ```
 
@@ -1141,7 +1116,7 @@ Las series utilizadas se construyeron a partir de las cuentas nacionales del INE
 
 \
 
-```{r 3_b, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+```{r 3_b, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center', fig.height=4}
 df <- df %>%
   mutate(
     Periodo = as.yearqtr(Periodo, format = "%Y/%q")
@@ -1159,17 +1134,15 @@ df_long <- df %>%
 #Gráfica de niveles
 
 ggplot(df_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = "Variables macroeconómicas en niveles reales (base 2018)",
     x = "Periodo",
     y = "Nivel"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 ```
 
 \
@@ -1178,7 +1151,7 @@ En niveles reales se observa una tendencia creciente de largo plazo en todas las
 
 \
 
-```{r 3_bb, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
+```{r 3_bb, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center', fig.height=4}
 #Versión logarítmica
 
 df_log <- df %>%
@@ -1200,17 +1173,15 @@ df_log <- df %>%
 #Gráfica de los logaritmos
 
 ggplot(df_log, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = "Variables macroeconómicas en logaritmos",
     x = "Periodo",
     y = "Logaritmo"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 
 ```
 
@@ -1248,17 +1219,15 @@ df_growth_long <- df_growth %>%
 
 # Gráfica de tasas de crecimiento
 ggplot(df_growth_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = "Tasas de crecimiento anual de las variables macroeconómicas",
     x = "Periodo",
     y = "Tasa de crecimiento"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 
 # Matriz de varianzas y covarianzas
 matriz_cov_growth <- df_growth %>%
@@ -1326,17 +1295,15 @@ df_hp_long <- df_hp_cycle %>%
 
 # Gráfica de componentes cíclicos
 ggplot(df_hp_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = expression(paste("Componentes c\u00edclicos (filtro HP, ", lambda, " = 1600)")),
     x = "Periodo",
     y = "Ciclo"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 
 # Matriz de varianzas y covarianzas
 matriz_cov_hp <- df_hp_cycle %>%
@@ -1402,17 +1369,15 @@ df_bp_long <- df_bp_cycle %>%
 
 # Gráfica de componentes cíclicos
 ggplot(df_bp_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = "Componentes cíclicos (filtro Band-Pass Christiano-Fitzgerald)",
     x = "Periodo",
     y = "Ciclo"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 
 # Matriz de varianzas y covarianzas
 matriz_cov_bp <- df_bp_cycle %>%
@@ -1504,17 +1469,15 @@ df_bn_long <- df_bn_cycle %>%
 
 # Gráfica de componentes cíclicos
 ggplot(df_bn_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = expression(paste("Componentes c\u00edclicos (Beveridge-Nelson, aproximaci\u00f3n AR(1) en ", Delta, "log)")),
     x = "Periodo",
     y = "Ciclo"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 
 # Matriz de varianzas y covarianzas
 matriz_cov_bn <- df_bn_cycle %>%
@@ -1555,39 +1518,36 @@ df_d <- df_growth %>%
 
 # Gráfica consumo total vs producto
 p1 <- ggplot(df_d, aes(x = g_C, y = g_Y)) +
-  geom_point(alpha = 0.6, color = "steelblue") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.6, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Relación entre crecimiento del consumo total y del producto",
     x = "Crecimiento del consumo (C)",
     y = "Crecimiento del producto (Y)"
   ) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme_epp()
 
 # Gráfica consumo de bienes vs producto
 p2 <- ggplot(df_d, aes(x = g_Cb, y = g_Y)) +
-  geom_point(alpha = 0.6, color = "darkred") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.6, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Relación entre crecimiento del consumo de bienes y del producto",
     x = "Crecimiento del consumo de bienes (Cb)",
     y = "Crecimiento del producto (Y)"
   ) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme_epp()
 
 # Gráfica consumo de servicios vs producto
 p3 <- ggplot(df_d, aes(x = g_Cs, y = g_Y)) +
-  geom_point(alpha = 0.6, color = "darkgreen") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.6, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Relación entre crecimiento del consumo de servicios y del producto",
     x = "Crecimiento del consumo de servicios (Cs)",
     y = "Crecimiento del producto (Y)"
   ) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme_epp()
 
 # Imprimir
 p1
@@ -1765,17 +1725,15 @@ df_comp_long <- df_comp %>%
 # Gráfica en logaritmos
 
 ggplot(df_comp_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = "Producto y consumo en México y Brasil (logaritmos)",
     x = "Periodo",
     y = "Logaritmo"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 ```
 
 \
@@ -1815,17 +1773,15 @@ df_growth_comp_long <- df_growth_comp %>%
 
 # Gráfica de tasas de crecimiento
 ggplot(df_growth_comp_long, aes(x = Periodo, y = Valor, color = Variable)) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   labs(
     title = "Tasas de crecimiento anual del producto y consumo en México y Brasil",
     x = "Periodo",
     y = "Tasa de crecimiento"
   ) +
   scale_x_yearqtr(format = "%Y", n = 10) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  scale_color_viridis_d(option = "turbo") +
+  theme_epp()
 ```
 
 \
@@ -1915,27 +1871,25 @@ df_scatter <- df_growth_comp %>%
 
 # México
 p_mex <- ggplot(df_scatter, aes(x = g_CM, y = g_YM)) +
-  geom_point(alpha = 0.6, color = "steelblue") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.6, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "México: crecimiento del consumo vs producto",
     x = "Crecimiento del consumo (CM)",
     y = "Crecimiento del producto (YM)"
   ) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme_epp()
 
 # Brasil
 p_bra <- ggplot(df_scatter, aes(x = g_CB, y = g_YB)) +
-  geom_point(alpha = 0.6, color = "darkred") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.6, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Brasil: crecimiento del consumo vs producto",
     x = "Crecimiento del consumo (CB)",
     y = "Crecimiento del producto (YB)"
   ) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme_epp()
 
 # Mostrar
 p_mex
@@ -2119,8 +2073,8 @@ r2 <- summary(modelo_c)$r.squared
 
 ```{r grafica_c, echo=FALSE, fig.cap=" Relación ingreso-gasto en la muestra completa de hogares.", fig.pos="H"}
 ggplot(base, aes(x = ingreso, y = gasto)) +
-  geom_point(alpha = 0.2, color = "black") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.2, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Relación entre ingreso y gasto",
     x = "Ingreso",
@@ -2128,11 +2082,7 @@ ggplot(base, aes(x = ingreso, y = gasto)) +
   ) +
   scale_x_continuous(labels = scales::comma) +
   scale_y_continuous(labels = scales::comma) +
-  theme_classic() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    text = element_text(size = 11)
-  )
+  theme_epp()
 ```
 
 
@@ -2189,8 +2139,8 @@ r2_d <- summary(modelo_d)$r.squared
 
 ```{r grafica_d, echo=FALSE, fig.cap=" Relación ingreso-gasto en hogares con jefatura femenina (20–30 años, CDMX)."}
 ggplot(submuestra_d, aes(x = ingreso, y = gasto)) +
-  geom_point(alpha = 0.2, color = "black") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.2, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Relación entre ingreso y gasto",
     x = "Ingreso",
@@ -2198,11 +2148,7 @@ ggplot(submuestra_d, aes(x = ingreso, y = gasto)) +
   ) +
   scale_x_continuous(labels = scales::comma) +
   scale_y_continuous(labels = scales::comma) +
-  theme_classic() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    text = element_text(size = 11)
-  )
+  theme_epp()
 ```
 
 *Interpretación:*
@@ -2240,8 +2186,8 @@ r2_e <- summary(modelo_e)$r.squared
 ```
 ```{r grafica_e, echo=FALSE, fig.cap="Relación ingreso-gasto en hogares del ámbito urbano."}
 ggplot(submuestra_urbano, aes(x = ingreso, y = gasto)) +
-  geom_point(alpha = 0.2, color = "black") +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  geom_point(alpha = 0.2, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, colour = pal_3[3]) +
   labs(
     title = "Relación entre ingreso y gasto (urbano)",
     x = "Ingreso",
@@ -2249,11 +2195,7 @@ ggplot(submuestra_urbano, aes(x = ingreso, y = gasto)) +
   ) +
   scale_x_continuous(labels = scales::comma) +
   scale_y_continuous(labels = scales::comma) +
-  theme_classic() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    text = element_text(size = 11)
-  )
+  theme_epp()
 ```
 *Interpretación:*
 
@@ -2389,7 +2331,7 @@ Fuente: Banco de México. Sistema de Información Económica (SIE).
 
 > Grafique las series de tiempo juntas para compararlas visualmente.
 
-```{r ex5c}
+```{r ex5c, fig.height=5}
 # =========================
 # INCISO (c): Gráficas
 # =========================
@@ -2423,53 +2365,40 @@ data_long <- data_final %>%
   ))
 
 ggplot(data_long, aes(x = trimestre, y = valor)) +
-  geom_line(color = "black", size = 0.7) +
-  
+  geom_line(colour = pal_3[2], linewidth = 0.7) +
+
   facet_wrap(~variable, scales = "free_y", ncol = 2) +
-  
-  scale_y_continuous(labels = comma) +  
-  
+
+  scale_y_continuous(labels = comma) +
+
   scale_x_yearqtr(
     format = "%Y",
-    n = 6   
+    n = 6
   ) +
-  
+
   labs(
     title = "Figura 1",
     subtitle = "Series de tiempo: Consumo, Tipo de Cambio y Tasa de Interés en México",
     x = "Tiempo (Trimestres)",
     y = "Valor"
   ) +
-  
-  theme_classic(base_size = 11) +
-  
-  theme(
-    plot.title = element_text(hjust = 0, face = "bold"),
-    plot.subtitle = element_text(hjust = 0),
-    
-    strip.text = element_text(face = "bold", size = 10),
-    
-    axis.title = element_text(face = "bold"),
-    axis.text.x = element_text(angle = 0),
-    
-    legend.position = "none",
-    
-    panel.spacing = unit(1.2, "lines")  
-  )
+
+  theme_epp() +
+  theme(legend.position = "none")
 # =========================
 # GRÁFICA ADICIONAL: 
 # =========================
 
 ggplot(data_long, aes(x = trimestre, y = valor, linetype = variable)) +
-  geom_line(color = "black", size = 0.7) +
-  
+  geom_line(colour = pal_3[1], linewidth = 0.7) +
+
   scale_y_continuous(labels = comma) +
-  
+
   scale_x_yearqtr(
     format = "%Y",
     n = 6
   ) +
-  
+
   labs(
     title = "Figura 2",
     subtitle = "Comparación conjunta de las series (misma escala)",
@@ -2477,15 +2406,8 @@ ggplot(data_long, aes(x = trimestre, y = valor, linetype = variable)) +
     y = "Valor",
     linetype = "Serie"
   ) +
-  
-  theme_classic(base_size = 11) +
-  
-  theme(
-    plot.title = element_text(hjust = 0, face = "bold"),
-    plot.subtitle = element_text(hjust = 0),
-    axis.title = element_text(face = "bold"),
-    legend.position = "bottom"
-  )
+
+  theme_epp()
 ```
 
 *Descripción:*
@@ -2505,7 +2427,7 @@ Finalmente, al comparar visualmente las series, se aprecia que, aunque están re
 > Filtre todas las series obteniendo su tasa de cambio anual. Grafique las series
 > filtradas y obtenga la matriz de varianzas y covarianzas.
 
-```{r ex5d}
+```{r ex5d, fig.height=5}
 # =========================
 # INCISO (d): Tasas de crecimiento anual
 # =========================
@@ -2541,39 +2463,33 @@ data_growth_long <- data_growth %>%
 # =========================
 
 ggplot(data_growth_long, aes(x = trimestre, y = valor)) +
-  geom_line(color = "black", size = 0.7) +
-  
+  geom_line(colour = pal_3[2], linewidth = 0.7) +
+
   facet_wrap(~variable, scales = "free_y", ncol = 2) +
-  
+
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
   scale_x_yearqtr(format = "%Y", n = 6) +
-  
+
   labs(
     title = "Figura 4",
     subtitle = "Tasas de crecimiento anual de las series",
     x = "Tiempo (Trimestres)",
     y = "Tasa de crecimiento anual"
   ) +
-  
-  theme_classic(base_size = 11) +
-  theme(
-    plot.title = element_text(hjust = 0, face = "bold"),
-    plot.subtitle = element_text(hjust = 0),
-    strip.text = element_text(face = "bold"),
-    axis.title = element_text(face = "bold"),
-    legend.position = "none"
-  )
+
+  theme_epp() +
+  theme(legend.position = "none")
 
 # =========================
 # GRÁFICA ADICIONAL (MISMA ESCALA)
 # =========================
 
 ggplot(data_growth_long, aes(x = trimestre, y = valor, linetype = variable)) +
-  geom_line(color = "black", size = 0.7) +
-  
+  geom_line(colour = pal_3[1], linewidth = 0.7) +
+
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
   scale_x_yearqtr(format = "%Y", n = 6) +
-  
+
   labs(
     title = "Figura 5",
     subtitle = "Comparación conjunta de tasas de crecimiento anual",
@@ -2581,14 +2497,8 @@ ggplot(data_growth_long, aes(x = trimestre, y = valor, linetype = variable)) +
     y = "Tasa de crecimiento anual",
     linetype = "Serie"
   ) +
-  
-  theme_classic(base_size = 11) +
-  theme(
-    plot.title = element_text(hjust = 0, face = "bold"),
-    plot.subtitle = element_text(hjust = 0),
-    axis.title = element_text(face = "bold"),
-    legend.position = "bottom"
-  )
+
+  theme_epp()
 
 # =========================
 # MATRIZ DE VAR-COV 
@@ -2611,8 +2521,10 @@ rownames(matriz_cov) <- colnames(matriz_cov)
 # Mostrar tabla en formato limpio
 kable(
   round(matriz_cov, 4),
+  format = "latex",
   caption = "Tabla 1. Matriz de varianzas y covarianzas"
-)
+) %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Descripción:*
@@ -2712,8 +2624,10 @@ tabla_prop <- prop.table(tabla_b, margin = 2)
 tabla_matrix <- round(tabla_prop, 3)
 
 kable(tabla_matrix,
+      format = "latex",
       caption = "Tabla 1. Distribución de la riqueza neta por tamaño de localidad",
-      align = "c")
+      align = "c") %>%
+  kable_styling(latex_options = "hold_position")
 
 ```
 
@@ -2749,14 +2663,14 @@ sample_c <- enfih_c[sample(nrow(enfih_c), 2000), ]
 
 # Gráfica mejorada
 ggplot(sample_c, aes(x = log(ING_TOTAL), y = log(RIQ_NET))) +
-  geom_point(alpha = 0.2, size = 1, color = "black") +
-  geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
+  geom_point(alpha = 0.2, size = 1, colour = pal_3[1]) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", colour = pal_3[3]) +
   labs(
     title = "Figura 1. Relación entre ingreso corriente y riqueza neta",
     x = "Log del ingreso corriente",
     y = "Log de la riqueza neta"
   ) +
-  theme_classic()
+  theme_epp()
 ```
 
 *Descripción:*
@@ -2821,8 +2735,10 @@ tabla_prop_d <- prop.table(tabla_d, margin = 2)
 tabla_matrix_d <- round(tabla_prop_d, 3)
 
 kable(tabla_matrix_d,
+      format = "latex",
       caption = "Tabla 2. Formas de atender gastos imprevistos por tamaño de localidad",
-      align = "c")
+      align = "c") %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Resultados:*
@@ -2863,7 +2779,7 @@ shapes_6 <- c(16, 17, 15, 18, 1, 2)
 
 ---
 
-# Nota sobre las fuentes y reproducibilidad
+## Nota sobre las fuentes y reproducibilidad
 
 Este documento descarga los datos **directamente desde APIs y archivos públicos**
 al momento de compilarse. No se requiere descargar archivos externos manualmente,
@@ -2918,7 +2834,7 @@ salvo la API key de FRED (ver abajo).
 
 ---
 
-# Datos: carga y preparación
+## Datos: carga y preparación
 
 ```{r ex7-api-keys, include=FALSE}
 # ── FRED API KEY ──────────────────────────────────────────────────────────────
@@ -2937,7 +2853,7 @@ if (is.null(fredr_get_key()) || fredr_get_key() == "") {
 }
 ```
 
-## Función auxiliar: retorno anual desde datos diarios/mensuales
+### Función auxiliar: retorno anual desde datos diarios/mensuales
 
 ```{r ex7-utils, echo=FALSE}
 # Dado un tibble con columnas 'date' y 'value' (precios diarios o mensuales),
@@ -3003,7 +2919,7 @@ add_cooks <- function(df) {
 }
 ```
 
-## Descarga: índices bursátiles vía FRED
+### Descarga: índices bursátiles vía FRED
 
 ```{r ex7-indices-fred, echo=FALSE}
 # ── NASDAQ Composite (NASDAQCOM) ─────────────────────────────────────────────
@@ -3030,7 +2946,7 @@ cat("NASDAQ: años disponibles:", min(nasdaq_annual$year), "–", max(nasdaq_ann
 cat("Nikkei: años disponibles:", min(nikkei_annual$year), "–", max(nikkei_annual$year), "\n")
 ```
 
-## IPC (S&P/BMV) — datos hardcoded con fuente verificada
+### IPC (S&P/BMV) — datos hardcoded con fuente verificada
 
 ```{r ex7-ipc, echo=FALSE}
 # Fuente: Yahoo Finance (^MXX) / Bolsa Mexicana de Valores
@@ -3048,7 +2964,7 @@ ipc_annual <- tibble(
 )
 ```
 
-## Retornos nominales anuales
+### Retornos nominales anuales
 
 ```{r ex7-retornos, echo=FALSE}
 # calc_returns_df devuelve year + retorno; los renombramos de inmediato
@@ -3070,9 +2986,9 @@ yrs_ret <- intersect(r_ipc$year, intersect(r_nasdaq$year, r_nikkei$year))
 cat("Período de retornos:", min(yrs_ret), "–", max(yrs_ret), "\n")
 ```
 
-## Descarga: tasas libres de riesgo
+### Descarga: tasas libres de riesgo
 
-### EE.UU. — DGS1 (FRED)
+#### EE.UU. — DGS1 (FRED)
 
 ```{r ex7-rf-usa, echo=FALSE}
 # Fuente: Federal Reserve H.15 / FRED serie DGS1
@@ -3087,7 +3003,7 @@ rf_usa_annual <- annual_mean_rate(dgs1_raw)
 cat("DGS1: años disponibles:", min(rf_usa_annual$year), "–", max(rf_usa_annual$year), "\n")
 ```
 
-### Japón — call rate (FRED)
+#### Japón — call rate (FRED)
 
 ```{r ex7-rf-jpn, echo=FALSE}
 # Fuente: OECD / FRED serie IRSTCI01JPM156N
@@ -3104,7 +3020,7 @@ rf_jpn_annual <- annual_mean_rate(jpn_rate_raw)
 cat("JPN call rate: años disponibles:", min(rf_jpn_annual$year), "–", max(rf_jpn_annual$year), "\n")
 ```
 
-### México — CETES 28 días (Banxico SIE API)
+#### México — CETES 28 días (Banxico SIE API)
 
 ```{r ex7-rf-mex, echo=FALSE}
 # Fuente: Banco de México, SIE — serie SF60633 (CETES 28 días, tasa primaria)
@@ -3151,7 +3067,7 @@ tryCatch({
 cat("CETES: años disponibles:", min(rf_mex_annual$year), "–", max(rf_mex_annual$year), "\n")
 ```
 
-## Descarga: consumo privado real — World Bank WDI
+### Descarga: consumo privado real — World Bank WDI
 
 ```{r ex7-consumo-wdi, echo=FALSE}
 # Indicador NE.CON.PRVT.KD.ZG:
@@ -3181,7 +3097,7 @@ cat("Consumo WDI — México:", length(gc_mex_wdi), "obs  |",
     "Japón:", length(gc_jpn_wdi), "obs\n")
 ```
 
-## Consumo México desagregado — INEGI IMCP (descarga automática)
+### Consumo México desagregado — INEGI IMCP (descarga automática)
 
 ```{r ex7-consumo-inegi, echo=FALSE}
 # Fuente: INEGI, Indicador Mensual del Consumo Privado (IMCP)
@@ -3254,7 +3170,7 @@ cat("Consumo importado — IMCP:", length(gc_mex_imp),
     "obs, rango", min(names(gc_mex_imp)), "–", max(names(gc_mex_imp)), "\n")
 ```
 
-## Construcción del panel integrado
+### Construcción del panel integrado
 
 ```{r ex7-panel, echo=FALSE}
 # Alinear todas las series al período de retornos (1991–2024)
@@ -3310,7 +3226,7 @@ cat("NAs en prima_IPC:", sum(is.na(df_prima$prima_IPC)),
 
 ---
 
-# Inciso (a): Índices de Precios de Acciones (desde 1990)
+## Inciso (a): Índices de Precios de Acciones (desde 1990)
 
 > Consiga los valores anuales del IPC (BMV), el NASDAQ y el Nikkei 225 (Japón)
 > por lo menos desde 1990.
@@ -3349,8 +3265,9 @@ df_tabla <- ipc_annual    |> filter(year %in% tabla_years) |> rename(Año = year
   left_join(nasdaq_annual |> filter(year %in% tabla_years) |> rename(NASDAQ = value), by = c("Año" = "year")) |>
   left_join(nikkei_annual |> filter(year %in% tabla_years) |> rename(Nikkei = value), by = c("Año" = "year"))
 
-kable(df_tabla, digits = 1,
-      caption = "Precios de cierre a fin de año (puntos del índice, selección)")
+kable(df_tabla, format = "latex", digits = 1,
+      caption = "Precios de cierre a fin de año (puntos del índice, selección)") %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Fuentes: BMV/Yahoo Finance para IPC; Nasdaq, Inc./FRED (`NASDAQCOM`) para NASDAQ;
@@ -3358,7 +3275,7 @@ Nikkei Inc./FRED (`NIKKEI225`) para Nikkei 225.*
 
 ---
 
-# Inciso (b): Tasa de Retorno Nominal Anual
+## Inciso (b): Tasa de Retorno Nominal Anual
 
 > Calcule la tasa de retorno nominal anual para cada índice:
 > $r_t = (P_t - P_{t-1})/P_{t-1}$
@@ -3387,8 +3304,9 @@ stats_ret |>
   pivot_longer(everything(), names_to = c("Índice", "Stat"),
                names_sep = "_") |>
   pivot_wider(names_from = Stat, values_from = value) |>
-  kable(digits = 2,
-        caption = "Estadísticas de retornos nominales 1991–2024 (%)")
+  kable(format = "latex", digits = 2,
+        caption = "Estadísticas de retornos nominales 1991–2024 (%)") %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Resultados:* El índice con mayor media de retorno nominal es
@@ -3404,7 +3322,7 @@ y el de menor volatilidad es
 
 ---
 
-# Inciso (c): Tasa de Interés Libre de Riesgo (1 año)
+## Inciso (c): Tasa de Interés Libre de Riesgo (1 año)
 
 > Obtenga los valores promedio anual de la tasa de interés a un año para
 > México, EE.UU. y Japón.
@@ -3441,7 +3359,8 @@ df_rf |>
   pivot_longer(everything(), names_to = c("País", "Stat"),
                names_sep = "_") |>
   pivot_wider(names_from = Stat, values_from = value) |>
-  kable(digits = 2, caption = "Estadísticas de tasas libres de riesgo 1991–2024 (%)")
+  kable(format = "latex", digits = 2, caption = "Estadísticas de tasas libres de riesgo 1991–2024 (%)") %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Fuentes:* CETES 28 días: Banxico SIE API (serie SF60633). T-Bill 1 año:
@@ -3449,7 +3368,7 @@ FRED serie `DGS1`. Call rate Japón: FRED serie `IRSTCI01JPM156N` (OECD).
 
 ---
 
-# Inciso (d): Prima de Riesgo Accionaria
+## Inciso (d): Prima de Riesgo Accionaria
 
 > Calcule la prima de riesgo **real**: $\text{Prima}_t^{\text{real}} = r_t^{m,\text{real}} - r_t^{f,\text{real}}$
 >
@@ -3494,7 +3413,8 @@ df_prima |>
     `E[NASDAQ-DGS1]`       = mean(prima_NASDAQ, na.rm = TRUE),
     `E[Nikkei-CallRate]`   = mean(prima_Nikkei, na.rm = TRUE)
   ) |>
-  kable(digits = 2, caption = "Prima de riesgo media histórica 1991–2024 (%)")
+  kable(format = "latex", digits = 2, caption = "Prima de riesgo media histórica 1991–2024 (%)") %>%
+  kable_styling(latex_options = "hold_position")
 
 # Guardar primas medias para texto dinámico
 ep_ipc    <- mean(df_prima$prima_IPC,    na.rm = TRUE)
@@ -3542,7 +3462,7 @@ el consumo local deja de ser el estadístico apropiado para estimar $\gamma$.
 
 ---
 
-# Inciso (e): Covarianza con el Crecimiento del Consumo Agregado
+## Inciso (e): Covarianza con el Crecimiento del Consumo Agregado
 
 > $\text{Cov}(\text{Prima}_t,\; \Delta\%C_t)$ para cada país.
 >
@@ -3572,9 +3492,10 @@ cov_e <- tibble(
                            ~ cor_pval(.x, .y, "spearman"))
 )
 
-kable(cov_e, digits = 3,
+kable(cov_e, format = "latex", digits = 3,
       caption = paste0("Covarianza y correlación: prima vs. consumo agregado (WDI). ",
-                       "p-values bajo H\\textsubscript{0}: correlación = 0 (n $\\approx$ 34)."))
+                       "p-values bajo H\\textsubscript{0}: correlación = 0 (n $\\approx$ 34).")) %>%
+  kable_styling(latex_options = "hold_position")
 
 # ── Scatter con Cook's D ──────────────────────────────────────────────────────
 df_scatter_e <- bind_rows(
@@ -3618,7 +3539,7 @@ Una discrepancia grande entre $r$ de Pearson y $\rho$ de Spearman indica que el 
 
 ---
 
-# Inciso (f): Covarianza con Consumo de Durables y Servicios (tres economías)
+## Inciso (f): Covarianza con Consumo de Durables y Servicios (tres economías)
 
 > $\text{Cov}(\text{Prima}^k_t,\; \Delta\%C^{\text{dur},k}_t)$ y
 > $\text{Cov}(\text{Prima}^k_t,\; \Delta\%C^{\text{serv},k}_t)$ para $k \in$
@@ -3772,9 +3693,10 @@ cov_f <- tibble(
                                       error = function(e) NA_real_))
 )
 
-kable(cov_f, digits = 3,
+kable(cov_f, format = "latex", digits = 3,
       caption = paste0("Covarianza y correlación: prima vs. consumo desagregado. ",
-                       "p-values bajo H\\textsubscript{0}: correlación = 0."))
+                       "p-values bajo H\\textsubscript{0}: correlación = 0.")) %>%
+  kable_styling(latex_options = "hold_position")
 
 # ── Gráfica de dispersión para los tres países ────────────────────────────────
 pal_6    <- turbo(6, begin = 0.1, end = 0.9)
@@ -3839,7 +3761,7 @@ En Japón, `r round(cov_dur_jpn, 2)` (durables) y `r round(cov_serv_jpn, 2)` (se
 
 ---
 
-# Inciso (g): Aversión Relativa al Riesgo (CRRA)
+## Inciso (g): Aversión Relativa al Riesgo (CRRA)
 
 > Con utilidad CRRA, la condición de Euler implica:
 >
@@ -3884,8 +3806,9 @@ df_gamma <- tibble(
   `γ implícito`    = c(gamma_ipc, gamma_nasdaq, gamma_nikkei)
 )
 
-kable(df_gamma, digits = 1,
-      caption = "Coeficiente de aversión relativa al riesgo implícito (CRRA) — consumo WDI")
+kable(df_gamma, format = "latex", digits = 1,
+      caption = "Coeficiente de aversión relativa al riesgo implícito (CRRA) — consumo WDI") %>%
+  kable_styling(latex_options = "hold_position")
 
 # Rango microeconómico razonable de γ según la literatura (Arrow 1971, Hansen & Singleton 1982)
 gamma_min <- 1
@@ -3905,7 +3828,7 @@ literatura es entre `r gamma_min` y `r gamma_max` (Arrow 1971; Hansen y Singleto
 - **Nikkei (Japón):** $\hat{\gamma} =$ `r round(gamma_nikkei, 1)`.
 `r { g <- gamma_nikkei; if (!is.finite(g)) "No se puede calcular." else if (g >= gamma_min && g <= gamma_max) "Cae dentro del rango plausible." else if (g < 0) paste0("El signo es **negativo** ($\\hat{\\gamma} =$ ", round(g, 1), "). La covarianza entre la prima del Nikkei y el consumo japonés es negativa: el prolongado estancamiento post-burbuja (1990–2003) y la deflación crónica generaron períodos con caídas bursátiles simultáneas a modesto crecimiento del consumo, y períodos de rebote bursátil sin aceleración del consumo. Esto es consistente con la literatura que documenta que el acertijo japonés se manifiesta de forma atípica debido a la trampa de liquidez y la política monetaria no convencional.") else paste0("Es **muy elevado** ($\\hat{\\gamma} =$ ", round(g, 1), "), muy por encima del rango plausible.") }`
 
-### Resultado suplementario: S&P 500 (índice canónico para el EPP)
+#### Resultado suplementario: S&P 500 (índice canónico para el EPP)
 
 ```{r ex7g-sp500, echo=FALSE}
 # El índice apropiado para el EPP de Mehra-Prescott es un índice de mercado amplio.
@@ -3959,9 +3882,10 @@ tibble(
   `Cov(prima, Δc)` = cov_sp500_usa,
   `γ implícito`    = gamma_sp500
 ) |>
-  kable(digits = 1,
+  kable(format = "latex", digits = 1,
         caption = paste0("S&P 500 vs. DGS1: γ implícito (período ",
-                         min(yrs_sp500), "–", max(yrs_sp500), ")"))
+                         min(yrs_sp500), "–", max(yrs_sp500), ")")) %>%
+  kable_styling(latex_options = "hold_position")
 
 cat(sprintf(
   "S&P 500: E[prima] = %.2f%%, Cov = %.2f, γ = %.1f\n",
@@ -3977,7 +3901,7 @@ literatura (Mehra y Prescott reportan valores ~30–50 para datos históricos
 largos de EE.UU.). Valores de $\gamma$ empíricamente plausibles (1–5) no pueden
 explicar esta prima, ilustrando con claridad el acertijo.
 
-### Análisis de sensibilidad: estabilidad de $\hat{\gamma}$ por sub-período
+#### Análisis de sensibilidad: estabilidad de $\hat{\gamma}$ por sub-período
 
 ```{r ex7g-sens, echo=FALSE}
 # Sub-períodos: muestra completa y exclusiones de episodios extremos documentados
@@ -4022,10 +3946,11 @@ gamma_sens <- map_dfr(names(periodos), function(nm) {
   )
 })
 
-kable(gamma_sens, digits = 1,
+kable(gamma_sens, format = "latex", digits = 1,
       caption = paste0("Sensibilidad de $\\hat{\\gamma}$ por sub-período y exclusión de episodios extremos. ",
                        "Rango microeconómicamente plausible: 1–5. ",
-                       "NA indica covarianza cero o insuficiente (n < 4 pares completos)."))
+                       "NA indica covarianza cero o insuficiente (n < 4 pares completos).")) %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Lectura de la tabla:* si $\hat{\gamma}$ cambia radicalmente al excluir unos pocos años,
@@ -4041,7 +3966,7 @@ resultado, no la tendencia central. En particular:
 
 ---
 
-# Inciso (h): Covarianza con Consumo de Bienes Importados (México)
+## Inciso (h): Covarianza con Consumo de Bienes Importados (México)
 
 > $\text{Cov}(\text{Prima}^{IPC}_t,\; \Delta\%C^{\text{imp}}_t)$
 >
@@ -4058,8 +3983,9 @@ tibble(
   Estadístico = c("Covarianza", "r Pearson", "p Pearson", "ρ Spearman", "p Spearman"),
   Valor       = c(cov_imp, cor_imp, pval_imp_pearson, rho_imp, pval_imp_spearman)
 ) |>
-  kable(digits = 4,
-        caption = "Prima IPC vs. crecimiento consumo importados (México). p-values bajo H\\textsubscript{0}: correlación = 0.")
+  kable(format = "latex", digits = 4,
+        caption = "Prima IPC vs. crecimiento consumo importados (México). p-values bajo H\\textsubscript{0}: correlación = 0.") %>%
+  kable_styling(latex_options = "hold_position")
 
 df_imp <- add_cooks(tibble(
   year  = yrs_ret,
@@ -4098,7 +4024,7 @@ el de Spearman es `r round(pval_imp_spearman, 3)`
 
 ---
 
-# Inciso (i): Aversión al Riesgo con Consumo Importado
+## Inciso (i): Aversión al Riesgo con Consumo Importado
 
 ```{r ex7i, echo=FALSE}
 # Misma corrección de unidades que en inciso (g): multiplicar por 100
@@ -4109,8 +4035,9 @@ tibble(
   `Cov(prima, Δc_imp)` = cov_imp,
   `γ implícito (importado)` = gamma_imp
 ) |>
-  kable(digits = 1,
-        caption = "Aversión relativa al riesgo: consumo de bienes importados (México)")
+  kable(format = "latex", digits = 1,
+        caption = "Aversión relativa al riesgo: consumo de bienes importados (México)") %>%
+  kable_styling(latex_options = "hold_position")
 
 # Tabla comparativa — todos los tipos de consumo para México
 tibble(
@@ -4130,8 +4057,9 @@ tibble(
     gamma_imp
   )
 ) |>
-  kable(digits = 1,
-        caption = "Comparación de γ implícito según la medida de consumo (México)")
+  kable(format = "latex", digits = 1,
+        caption = "Comparación de γ implícito según la medida de consumo (México)") %>%
+  kable_styling(latex_options = "hold_position")
 ```
 
 *Resultados:* El $\hat{\gamma}$ con consumo importado es `r round(gamma_imp, 1)`,
@@ -4193,9 +4121,9 @@ texto_i <- if (reduce) {
 
 ---
 
-# Inciso (j): Interpretación General
+## Inciso (j): Interpretación General
 
-## El acertijo del premio al riesgo: síntesis
+### El acertijo del premio al riesgo: síntesis
 
 El **acertijo del premio al riesgo** (*equity premium puzzle*), formulado por
 Mehra y Prescott (1985), señala que el elevado premio histórico promedio del
@@ -4203,7 +4131,7 @@ mercado accionario frente a activos libres de riesgo —típicamente 6–8 punto
 porcentuales anuales en EE.UU.— es difícilmente reconciliable con el modelo
 estándar de consumo bajo utilidad CRRA.
 
-### Hallazgos para México (IPC vs. CETES)
+#### Hallazgos para México (IPC vs. CETES)
 
 La prima nominal del IPC frente a CETES es, en promedio sobre 1991–2024,
 `r if(ep_ipc < 0) paste0("**negativa** (", round(ep_ipc, 1), "%)") else paste0("**positiva** (", round(ep_ipc, 1), "%)")`,
@@ -4212,7 +4140,7 @@ años noventa (llegando al ~50% en 1995, crisis del Tequila). El
 $\hat{\gamma} =$ `r round(gamma_ipc, 1)` calculado con consumo agregado
 `r if(!is.finite(gamma_ipc)) "no es calculable." else if(gamma_ipc < 0) paste0("es **negativo**, lo que ocurre cuando la covarianza entre la prima y el consumo es negativa. En México, los shocks macroeconómicos idiosincrásicos (devaluaciones, crisis de balanza de pagos) rompen la relación consumo–rendimiento que predice el modelo CRRA estándar.") else if(gamma_ipc >= 1 && gamma_ipc <= 5) paste0("cae dentro del rango plausible (1–5), pero por las razones equivocadas: la prima media es baja y la covarianza también lo es, por lo que el cociente resulta 'razonable' sin que el modelo tenga poder explicativo real.") else paste0("es elevado (fuera del rango 1–5), consistente con el acertijo.")`
 
-### Hallazgos para EE.UU. (NASDAQ vs. T-Bill y S&P 500 vs. T-Bill)
+#### Hallazgos para EE.UU. (NASDAQ vs. T-Bill y S&P 500 vs. T-Bill)
 
 El NASDAQ —índice concentrado en tecnología— produce un $\hat{\gamma}$
 `r if(!is.finite(gamma_nasdaq)) "incalculable" else if(gamma_nasdaq < 0) paste0("**negativo** (", round(gamma_nasdaq, 1), ") debido a la covarianza negativa entre sus retornos y el consumo")  else paste0("de ", round(gamma_nasdaq, 1))`.
@@ -4224,7 +4152,7 @@ $\hat{\gamma} =$ `r round(gamma_sp500, 0)`, fuera del rango razonable (1–5) y
 consistente con los resultados clásicos de Mehra y Prescott (1985), que
 encuentran valores de 20–50 según el período y la fuente.
 
-### Hallazgos para Japón (Nikkei vs. Call rate)
+#### Hallazgos para Japón (Nikkei vs. Call rate)
 
 El Nikkei exhibe períodos largos de retornos negativos (burbuja 1991–2003;
 posterior estancamiento). La prima media es
@@ -4235,7 +4163,7 @@ La literatura reconoce que el caso japonés es excepcional: el banco central
 compró directamente ETFs de acciones (a partir de 2010), alterando la relación
 fundamental entre riesgo de mercado y consumo del agente privado.
 
-### El papel del consumo importado (México)
+#### El papel del consumo importado (México)
 
 Al utilizar el crecimiento del consumo de **bienes importados** en lugar del
 consumo total se obtiene una covarianza más alta con la prima bursátil. Esto
@@ -4250,7 +4178,7 @@ sugiriendo que:
    (Mankiw 1986; Constantinides & Duffie 1996), donde la concentración de
    los shocks —no su varianza agregada— determina el premio.
 
-### Conclusión
+#### Conclusión
 
 El acertijo del premio al riesgo se manifiesta con claridad en EE.UU. usando
 el S&P 500 ($\hat{\gamma} =$ `r round(gamma_sp500, 0)`), replicando los
